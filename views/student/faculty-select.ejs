@@ -1,0 +1,115 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold text-dark mb-1">Faculty Guide Directory</h3>
+    <p class="text-muted small mb-0">Select and register under an approved faculty guide for your project</p>
+  </div>
+  <a href="/student/dashboard" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+</div>
+
+<div id="selectionAlert" class="alert d-none mb-4" role="alert"></div>
+
+<div class="row g-4">
+  <% if (facultyList && facultyList.length > 0) { %>
+    <% facultyList.forEach(function(f) { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card card-custom h-100 p-4 d-flex flex-column justify-content-between border-top border-4 <%= f.isAvailable ? 'border-primary' : 'border-danger' %>">
+          <div>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="fw-bold mb-0 text-dark"><%= f.fullName %></h5>
+                <span class="badge bg-light text-secondary border font-mono small"><%= f.employeeId %></span>
+              </div>
+              <% if (f.isAvailable) { %>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                  <i class="bi bi-check-circle me-1"></i> Available
+                </span>
+              <% } else { %>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                  <i class="bi bi-x-circle me-1"></i> Full
+                </span>
+              <% } %>
+            </div>
+
+            <p class="text-muted small mb-3">
+              <i class="bi bi-envelope me-1"></i> <%= f.email %>
+            </p>
+
+            <div class="bg-light p-3 rounded-3 mb-3">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Team Capacity:</span>
+                <span class="fw-bold text-dark"><%= f.capacity %> teams</span>
+              </div>
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Occupied Slots:</span>
+                <span class="fw-bold text-dark"><%= f.occupied %> teams</span>
+              </div>
+              <div class="d-flex justify-content-between small text-muted">
+                <span>Available Slots:</span>
+                <span class="fw-bold <%= f.isAvailable ? 'text-primary' : 'text-danger' %>"><%= f.available %> slots</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <% if (currentAssigned && currentAssigned.toString() === f._id.toString()) { %>
+              <button class="btn btn-secondary w-100 btn-sm disabled" disabled>
+                <i class="bi bi-check2-circle"></i> Currently Selected Guide
+              </button>
+            <% } else if (f.isAvailable) { %>
+              <button class="btn btn-primary-custom w-100 btn-sm btn-select-faculty" data-id="<%= f._id %>" data-name="<%= f.fullName %>">
+                <i class="bi bi-hand-index-thumb"></i> Register Under Faculty
+              </button>
+            <% } else { %>
+              <button class="btn btn-outline-danger w-100 btn-sm disabled" disabled>
+                <i class="bi bi-slash-circle"></i> Capacity Full
+              </button>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="col-12 text-center py-5">
+      <p class="text-muted">No faculty members currently registered in the system.</p>
+    </div>
+  <% } %>
+</div>
+
+<script>
+$(document).ready(function() {
+  $('.btn-select-faculty').on('click', function() {
+    const facultyId = $(this).data('id');
+    const facultyName = $(this).data('name');
+    const alertBox = $('#selectionAlert');
+    const $btn = $(this);
+
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Assigning...');
+
+    $.ajax({
+      url: '/student/select-faculty',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ facultyId }),
+      success: function(res) {
+        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block');
+        alertBox.html(`<strong>Success!</strong> ${res.message}`);
+        setTimeout(function() {
+          window.location.href = res.redirectUrl || '/student/create-team';
+        }, 1200);
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="bi bi-hand-index-thumb"></i> Register Under Faculty');
+        const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error registering under faculty.';
+        alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block');
+        alertBox.text(msg);
+      }
+    });
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

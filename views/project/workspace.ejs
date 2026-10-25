@@ -1,0 +1,589 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="fw-bold text-dark mb-0"><%= project.title %></h3>
+      <span class="status-badge status-<%= project.status.toLowerCase().replace('_', '') %>">
+        <%= project.status %>
+      </span>
+      <% if (project.isArchived) { %>
+        <span class="badge bg-secondary">Archived</span>
+      <% } %>
+    </div>
+    <p class="text-muted small mb-0 mt-1">
+      Team: <strong><%= project.team ? project.team.name : 'Team' %></strong> &bull;
+      Faculty Guide: <strong><%= project.faculty ? project.faculty.fullName : 'Guide' %></strong>
+    </p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <% if (currentUser && currentUser.role === 'FACULTY' && project.status !== 'COMPLETED') { %>
+      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#evaluateProjectModal">
+        <i class="bi bi-award-fill me-1"></i> Final Evaluation & Complete Project
+      </button>
+    <% } %>
+    <a href="<%= currentUser && currentUser.role === 'FACULTY' ? '/faculty/dashboard' : '/student/dashboard' %>" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Evaluation Banner if Completed -->
+<% if (project.evaluation && project.evaluation.score !== null) { %>
+  <div class="card card-custom p-4 mb-4 border-start border-4 border-success bg-success-subtle bg-opacity-25">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold text-success mb-1"><i class="bi bi-check-circle-fill me-2"></i> Project Completed & Evaluated</h5>
+        <p class="mb-0 text-dark small"><strong>Faculty Remarks:</strong> <%= project.evaluation.remarks %></p>
+      </div>
+      <div class="text-end">
+        <span class="fs-2 fw-bold text-success"><%= project.evaluation.score %></span><span class="fs-5 text-muted">/100</span>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<!-- Workspace Navigation Tabs -->
+<ul class="nav nav-pills mb-4 gap-2" id="workspaceTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active rounded-pill px-3 py-2" id="overview-tab" data-bs-toggle="pill" data-bs-target="#tab-overview">
+      <i class="bi bi-info-circle me-1"></i> Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link rounded-pill px-3 py-2" id="members-tab" data-bs-toggle="pill" data-bs-target="#tab-members">
+      <i class="bi bi-people me-1"></i> Members (<%= project.participatingMembers.length %>)
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link rounded-pill px-3 py-2" id="tasks-tab" data-bs-toggle="pill" data-bs-target="#tab-tasks">
+      <i class="bi bi-list-task me-1"></i> Tasks (<%= tasks.length %>)
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link rounded-pill px-3 py-2" id="issues-tab" data-bs-toggle="pill" data-bs-target="#tab-issues">
+      <i class="bi bi-question-circle me-1"></i> Issues & Doubts (<%= issues.length %>)
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="workspaceTabContent">
+  <!-- TAB 1: Project Overview -->
+  <div class="tab-pane fade show active" id="tab-overview">
+    <div class="card card-custom p-4 mb-4">
+      <h5 class="fw-bold text-dark mb-3">Project Description & Scope</h5>
+      <p class="text-secondary mb-4" style="white-space: pre-line;"><%= project.description %></p>
+
+      <div class="row g-3 border-top pt-3">
+        <div class="col-md-4">
+          <span class="text-muted small d-block">Submitted Proposal Date:</span>
+          <span class="fw-semibold text-dark"><%= new Date(project.createdAt).toLocaleDateString() %></span>
+        </div>
+        <div class="col-md-4">
+          <span class="text-muted small d-block">Supervising Faculty:</span>
+          <span class="fw-semibold text-dark"><%= project.faculty ? project.faculty.fullName : 'Guide' %> (<%= project.faculty ? project.faculty.email : '' %>)</span>
+        </div>
+        <div class="col-md-4">
+          <span class="text-muted small d-block">Team Status:</span>
+          <span class="fw-semibold text-dark"><%= project.team && project.team.isMixedTeam ? 'Mixed Internal + External' : 'Standard Team' %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Participating Members (ACTIVE vs FROZEN) -->
+  <div class="tab-pane fade" id="tab-members">
+    <div class="card card-custom p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold text-dark mb-0">Project Participation Roster</h5>
+          <span class="text-muted small">Distinct participation status: ACTIVE or FROZEN for this specific project</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Student Name</th>
+              <th>Username</th>
+              <th>Student Type</th>
+              <th>Register Number</th>
+              <th>Participation Status</th>
+              <th class="text-end">Toggle Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% project.participatingMembers.forEach(function(m) { %>
+              <tr>
+                <td><strong><%= m.student ? m.student.fullName : 'Student' %></strong></td>
+                <td><span class="text-muted">@<%= m.student ? m.student.username : '' %></span></td>
+                <td>
+                  <span class="badge <%= (m.student && m.student.studentType === 'INTERNAL') ? 'badge-internal' : 'badge-external' %>">
+                    <%= m.student ? m.student.studentType : '-' %>
+                  </span>
+                </td>
+                <td>
+                  <% if (m.student && m.student.registerNumber) { %>
+                    <code class="text-primary"><%= m.student.registerNumber %></code>
+                  <% } else { %>
+                    <span class="text-muted small">N/A</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (m.participationStatus === 'ACTIVE') { %>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <i class="bi bi-activity"></i> ACTIVE
+                    </span>
+                  <% } else { %>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                      <i class="bi bi-snow"></i> FROZEN
+                    </span>
+                  <% } %>
+                </td>
+                <td class="text-end">
+                  <% if (m.participationStatus === 'ACTIVE') { %>
+                    <button class="btn btn-outline-secondary btn-sm btn-toggle-part" data-id="<%= m.student._id %>" data-status="FROZEN">
+                      <i class="bi bi-snow"></i> Set Frozen
+                    </button>
+                  <% } else { %>
+                    <button class="btn btn-outline-success btn-sm btn-toggle-part" data-id="<%= m.student._id %>" data-status="ACTIVE">
+                      <i class="bi bi-activity"></i> Set Active
+                    </button>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Tasks, Dependencies, and Submissions -->
+  <div class="tab-pane fade" id="tab-tasks">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark mb-0">Project Task Pipeline</h5>
+      <button class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+        <i class="bi bi-plus-circle me-1"></i> New Task
+      </button>
+    </div>
+
+    <div class="row g-3">
+      <% if (tasks && tasks.length > 0) { %>
+        <% tasks.forEach(function(task) { %>
+          <div class="col-md-6">
+            <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="fw-bold text-dark mb-0"><%= task.title %></h6>
+                  <span class="status-badge status-<%= task.status.toLowerCase().replace('_', '') %> small">
+                    <%= task.status %>
+                  </span>
+                </div>
+                <p class="text-muted small mb-2"><%= task.description %></p>
+                
+                <div class="small text-secondary mb-2">
+                  <i class="bi bi-person me-1"></i> Assigned To: <strong><%= task.assignedTo ? task.assignedTo.fullName : 'Unassigned' %></strong>
+                </div>
+
+                <% if (task.dependencies && task.dependencies.length > 0) { %>
+                  <div class="small bg-light p-2 rounded mb-2">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Prerequisite Tasks:</span>
+                    <% task.dependencies.forEach(function(dep) { %>
+                      <span class="badge bg-white text-dark border me-1">
+                        <%= dep.title %> (<%= dep.status %>)
+                      </span>
+                    <% }); %>
+                  </div>
+                <% } %>
+
+                <!-- Submissions & Version History -->
+                <% if (task.submissions && task.submissions.length > 0) { %>
+                  <div class="border-top pt-2 mt-2">
+                    <span class="text-muted small fw-semibold">Version Submissions (<%= task.submissions.length %>):</span>
+                    <% task.submissions.forEach(function(sub) { %>
+                      <div class="bg-light p-2 rounded mt-1 small">
+                        <div class="d-flex justify-content-between">
+                          <strong class="text-primary">Version <%= sub.version %></strong>
+                          <span class="text-muted" style="font-size: 0.72rem;"><%= new Date(sub.submittedAt).toLocaleDateString() %></span>
+                        </div>
+                        <div class="text-truncate my-1 font-mono"><%= sub.content %></div>
+                        <% if (sub.aiReport && sub.aiReport.feedback) { %>
+                          <div class="bg-white p-1 rounded border text-muted" style="font-size: 0.72rem;">
+                            <i class="bi bi-robot text-primary"></i> <%= sub.aiReport.feedback %>
+                          </div>
+                        <% } %>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="mt-3 pt-3 border-top d-flex gap-2 justify-content-between">
+                <button class="btn btn-outline-primary btn-sm btn-submit-deliverable" data-taskid="<%= task._id %>">
+                  <i class="bi bi-upload"></i> Submit Version
+                </button>
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Status: <%= task.status %>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item btn-change-task-status" href="#" data-id="<%= task._id %>" data-status="TODO">TODO</a></li>
+                    <li><a class="dropdown-item btn-change-task-status" href="#" data-id="<%= task._id %>" data-status="IN_PROGRESS">IN_PROGRESS</a></li>
+                    <li><a class="dropdown-item btn-change-task-status" href="#" data-id="<%= task._id %>" data-status="IN_REVIEW">IN_REVIEW</a></li>
+                    <li><a class="dropdown-item btn-change-task-status" href="#" data-id="<%= task._id %>" data-status="COMPLETED">COMPLETED</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-4 text-muted">
+          No tasks defined yet. Add smaller tasks to progress work through TODO &rarr; IN_PROGRESS &rarr; IN_REVIEW &rarr; COMPLETED.
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- TAB 4: Issues and Doubts -->
+  <div class="tab-pane fade" id="tab-issues">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark mb-0">Issues and Doubts</h5>
+      <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#createIssueModal">
+        <i class="bi bi-exclamation-circle me-1"></i> Raise Issue
+      </button>
+    </div>
+
+    <% if (issues && issues.length > 0) { %>
+      <div class="list-group">
+        <% issues.forEach(function(iss) { %>
+          <div class="list-group-item card-custom mb-3 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-1 text-dark"><%= iss.title %></h6>
+                <p class="text-muted small mb-2"><%= iss.description %></p>
+                <span class="text-muted small">Raised by: <strong><%= iss.raisedBy ? iss.raisedBy.fullName : 'Student' %></strong></span>
+              </div>
+              <span class="badge <%= iss.status === 'RESOLVED' ? 'bg-success' : 'bg-warning text-dark' %>">
+                <%= iss.status %>
+              </span>
+            </div>
+
+            <% if (iss.status === 'RESOLVED') { %>
+              <div class="bg-success-subtle p-2 rounded mt-2 small text-success-emphasis">
+                <strong>Resolution:</strong> <%= iss.resolution %>
+              </div>
+            <% } else { %>
+              <div class="mt-2 text-end">
+                <button class="btn btn-outline-success btn-sm btn-resolve-issue" data-id="<%= iss._id %>">
+                  <i class="bi bi-check2"></i> Add Resolution
+                </button>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-4 text-muted">
+        No open issues or doubts logged in this project workspace.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal: Create Task -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Create New Project Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="createTaskForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small">Task Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="title" id="taskTitle" required placeholder="e.g. Database Schema Implementation">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Description</label>
+            <textarea class="form-control" name="description" id="taskDesc" rows="2" placeholder="Task requirements and scope..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Assign To <span class="text-danger">*</span></label>
+            <select class="form-select" name="assignedTo" id="taskAssignee" required>
+              <option value="">-- Choose Member --</option>
+              <% project.participatingMembers.filter(m => m.participationStatus === 'ACTIVE').forEach(function(m) { %>
+                <option value="<%= m.student._id %>"><%= m.student.fullName %> (@<%= m.student.username %>)</option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Prerequisite Dependency Task (Optional)</label>
+            <select class="form-select" name="dependencies" id="taskDep">
+              <option value="">-- None (No prerequisites) --</option>
+              <% tasks.forEach(function(t) { %>
+                <option value="<%= t._id %>"><%= t.title %> (<%= t.status %>)</option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom btn-sm">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Submit Deliverable -->
+<div class="modal fade" id="submitDeliverableModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Submit Task Deliverable</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="submitDeliverableForm">
+        <input type="hidden" id="submitTaskId" name="taskId">
+        <div class="modal-body">
+          <label class="form-label small">Deliverable Content / Repository Link / Summary <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="deliverableContent" rows="4" required placeholder="Paste GitHub pull request link, documentation, or code summary..."></textarea>
+          <div class="form-text small text-muted mt-2">
+            <i class="bi bi-robot text-primary"></i> Submissions undergo AI-Assisted verification analysis and increment version history.
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom btn-sm">Submit Deliverable</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Issue -->
+<div class="modal fade" id="createIssueModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Raise Issue or Doubt</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="createIssueForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small">Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="issueTitle" required placeholder="e.g. MongoDB replica set connection issue">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Description & Questions <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="issueDesc" rows="3" required placeholder="Explain the problem..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">Log Issue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Faculty Evaluation -->
+<div class="modal fade" id="evaluateProjectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Faculty Final Project Evaluation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="evaluateProjectForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small">Final Score (0 to 100) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="evalScore" min="0" max="100" required placeholder="e.g. 92">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Evaluation Remarks & Feedback</label>
+            <textarea class="form-control" id="evalRemarks" rows="3" placeholder="Assess team collaboration, quality of submissions, and completeness..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success btn-sm">Finalize & Mark Completed</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  const projectId = '<%= project._id %>';
+
+  // Toggle Participation (ACTIVE vs FROZEN)
+  $('.btn-toggle-part').on('click', function() {
+    const studentId = $(this).data('id');
+    const status = $(this).data('status');
+
+    $.ajax({
+      url: `/project/${projectId}/toggle-participation`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ studentId, status }),
+      success: function(res) {
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error updating participation.');
+      }
+    });
+  });
+
+  // Create Task
+  $('#createTaskForm').on('submit', function(e) {
+    e.preventDefault();
+    const payload = {
+      title: $('#taskTitle').val(),
+      description: $('#taskDesc').val(),
+      assignedTo: $('#taskAssignee').val(),
+      dependencies: $('#taskDep').val() ? [$('#taskDep').val()] : []
+    };
+
+    $.ajax({
+      url: `/project/${projectId}/create-task`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(payload),
+      success: function(res) {
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error creating task.');
+      }
+    });
+  });
+
+  // Change Task Status (with Dependency Verification)
+  $('.btn-change-task-status').on('click', function(e) {
+    e.preventDefault();
+    const taskId = $(this).data('id');
+    const status = $(this).data('status');
+
+    $.ajax({
+      url: `/project/task/${taskId}/status`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ status }),
+      success: function(res) {
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Prerequisite tasks must be COMPLETED first.');
+      }
+    });
+  });
+
+  // Open Deliverable Modal
+  $('.btn-submit-deliverable').on('click', function() {
+    const taskId = $(this).data('taskid');
+    $('#submitTaskId').val(taskId);
+    $('#deliverableContent').val('');
+    new bootstrap.Modal('#submitDeliverableModal').show();
+  });
+
+  // Submit Deliverable
+  $('#submitDeliverableForm').on('submit', function(e) {
+    e.preventDefault();
+    const taskId = $('#submitTaskId').val();
+    const content = $('#deliverableContent').val();
+
+    $.ajax({
+      url: `/project/task/${taskId}/submit`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ content }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error submitting deliverable.');
+      }
+    });
+  });
+
+  // Create Issue
+  $('#createIssueForm').on('submit', function(e) {
+    e.preventDefault();
+    const payload = {
+      title: $('#issueTitle').val(),
+      description: $('#issueDesc').val()
+    };
+
+    $.ajax({
+      url: `/project/${projectId}/create-issue`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(payload),
+      success: function(res) {
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error creating issue.');
+      }
+    });
+  });
+
+  // Resolve Issue
+  $('.btn-resolve-issue').on('click', function() {
+    const issueId = $(this).data('id');
+    const resolution = prompt('Enter resolution for this issue:');
+    if (!resolution || !resolution.trim()) return;
+
+    $.ajax({
+      url: `/project/issue/${issueId}/resolve`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ resolution }),
+      success: function(res) {
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert('Error resolving issue.');
+      }
+    });
+  });
+
+  // Faculty Evaluation Submit
+  $('#evaluateProjectForm').on('submit', function(e) {
+    e.preventDefault();
+    const payload = {
+      projectId: projectId,
+      score: $('#evalScore').val(),
+      remarks: $('#evalRemarks').val()
+    };
+
+    $.ajax({
+      url: '/faculty/evaluate-project',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(payload),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error evaluating project.');
+      }
+    });
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

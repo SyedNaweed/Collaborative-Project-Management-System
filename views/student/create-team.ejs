@@ -1,0 +1,122 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">Create Project Team</h3>
+        <p class="text-muted small mb-0">Form a team of 1 to 9 members and assign your verified faculty guide</p>
+      </div>
+      <a href="/student/dashboard" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Dashboard
+      </a>
+    </div>
+
+    <div id="teamFormAlert" class="alert d-none mb-4" role="alert"></div>
+
+    <div class="card card-custom p-4 p-md-5 mb-4">
+      <form id="createTeamForm" novalidate>
+        <!-- Hidden creator meta -->
+        <input type="hidden" id="creatorUsername" value="<%= student.username %>">
+        <input type="hidden" id="creatorStudentType" value="<%= student.studentType %>">
+
+        <div class="row g-3 mb-4">
+          <!-- Team Name -->
+          <div class="col-md-6">
+            <label for="teamName" class="form-label">Team Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="teamName" name="name" placeholder="e.g. Innovators Alpha" required>
+            <div class="form-text small text-muted">Unique within the selected faculty (case-insensitive).</div>
+            <div class="invalid-feedback" id="teamNameError"></div>
+          </div>
+
+          <!-- Faculty Selection -->
+          <div class="col-md-6">
+            <label for="facultySelect" class="form-label">Assigned Faculty Guide <span class="text-danger">*</span></label>
+            <select class="form-select" id="facultySelect" name="facultyId" required>
+              <option value="">-- Choose Faculty Guide --</option>
+              <% facultyOptions.forEach(function(f) { %>
+                <option value="<%= f._id %>" <%= (student.assignedFaculty && student.assignedFaculty.toString() === f._id.toString()) ? 'selected' : '' %> <%= f.available <= 0 ? 'disabled' : '' %>>
+                  <%= f.fullName %> (<%= f.employeeId %>) - [<%= f.available %>/<%= f.capacity %> slots available]
+                </option>
+              <% }); %>
+            </select>
+            <div class="invalid-feedback" id="facultySelectError"></div>
+          </div>
+        </div>
+
+        <!-- Team Member Management Section -->
+        <div class="border-top pt-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="fw-bold text-dark mb-0">Team Members</h5>
+              <span class="text-muted small">Allowed size: 1 to 9 students (Team Creator is automatically included)</span>
+            </div>
+            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">
+              Total Members: <span id="totalMembersCount">1</span> / 9
+            </span>
+          </div>
+
+          <!-- Add Member Input Field -->
+          <div class="card bg-light border-0 p-3 mb-3">
+            <label class="form-label text-dark fw-semibold small">Add Registered Teammate by Username</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">@</span>
+              <input type="text" class="form-control" id="memberUsernameInput" placeholder="Enter student's exact username">
+              <button type="button" class="btn btn-outline-primary" id="btnAddMember">
+                <i class="bi bi-person-plus"></i> Add Member
+              </button>
+            </div>
+            <div class="text-danger small mt-1 fw-semibold" id="memberAddError"></div>
+          </div>
+
+          <!-- Members Table -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="membersListTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Student Type</th>
+                  <th>Register Number</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated dynamically via teamValidation.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. MANDATORY MIXED TEAM COLLABORATION CHECKBOX (KEY REQUIREMENT) -->
+        <div id="mixedTeamCallout" class="collaboration-callout mb-4" style="display: none;">
+          <div class="d-flex align-items-start gap-3">
+            <div class="text-warning fs-3 mt-1">
+              <i class="bi bi-shield-exclamation"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold text-dark mb-1">Mixed Collaboration Detected</h6>
+              <p class="text-muted small mb-2">
+                This team brings together both <strong>Internal VIT students</strong> and <strong>External collaborative students</strong>. Under institutional policy, the team creator must explicitly declare and confirm this collaboration.
+              </p>
+              <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="collaborationConfirmed" name="collaborationConfirmed" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <label class="form-check-label collaboration-checkbox-label ms-2" for="collaborationConfirmed">
+                  "This team is a collaboration between Internal and External students."
+                </label>
+              </div>
+              <div class="text-danger small mt-1 fw-bold" id="collaborationConfirmedError"></div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-6">
+          <i class="bi bi-shield-check"></i> Finalize Team Creation
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/teamValidation.js"></script>
+<%- include('../partials/footer') %>
