@@ -18,6 +18,11 @@ const submissionSchema = new mongoose.Schema({
     similarityScore: { type: Number, default: 0 },
     feedback: { type: String, default: '' },
     flags: [String]
+  },
+  facultyReview: {
+    reviewedAt: { type: Date, default: null },
+    status: { type: String, enum: ['APPROVED', 'CHANGES_REQUESTED', null], default: null },
+    remarks: { type: String, default: '' }
   }
 });
 

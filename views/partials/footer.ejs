@@ -1,12 +1,55 @@
+<% if (typeof fullWidth !== 'undefined' && fullWidth) { %>
+</main>
+<% } else { %>
   </div>
 </main>
+<% } %>
 
-<footer>
-  <div class="container text-center">
-    <p class="mb-1 fw-semibold text-white">Collaborative Project Management System (CPMS)</p>
-    <p class="mb-0 small text-secondary">
-      Strict Form Validation &bull; Multi-Role Access &bull; Real-time MongoDB Integration
-    </p>
+<footer class="footer-modern">
+  <div class="container py-5">
+    <div class="row g-4 justify-content-between">
+      <div class="col-lg-5">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="footer-logo-badge">
+            <i class="bi bi-kanban-fill text-white fs-6"></i>
+          </div>
+          <span class="fs-5 fw-bold text-white">CPMS</span>
+        </div>
+        <p class="text-secondary small mb-3" style="max-width: 420px; line-height: 1.6;">
+          Next-generation academic platform uniting university students and faculty guides through structured project lifecycles, rigorous multi-tier validation, and AI-assisted deliverable quality verification.
+        </p>
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
+          <span class="status-indicator-dot"></span>
+          <span class="text-white-50 small" style="font-size: 0.78rem;">All 40 Verification Engines Active &bull; MongoDB Atlas Connected</span>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing: 0.6px;">Academic Portals</h6>
+        <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 text-secondary">
+          <li><a href="/auth/student-register" class="footer-link"><i class="bi bi-mortarboard me-2"></i> Student Registration</a></li>
+          <li><a href="/auth/faculty-register" class="footer-link"><i class="bi bi-person-badge me-2"></i> Faculty Guide Portal</a></li>
+          <li><a href="/auth/login" class="footer-link"><i class="bi bi-box-arrow-in-right me-2"></i> Sign In to Account</a></li>
+          <li><a href="/auth/forgot-password" class="footer-link"><i class="bi bi-shield-lock me-2"></i> OTP Password Recovery</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-3">
+        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing: 0.6px;">Validation Standards</h6>
+        <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 text-secondary">
+          <li><span class="text-secondary"><i class="bi bi-check2-circle text-primary me-2"></i> Pure Alphabetic Usernames</span></li>
+          <li><span class="text-secondary"><i class="bi bi-check2-circle text-primary me-2"></i> Reg No: 2 Num + 3 Alpha + 4 Num</span></li>
+          <li><span class="text-secondary"><i class="bi bi-check2-circle text-primary me-2"></i> Institutional Email Guards</span></li>
+          <li><span class="text-secondary"><i class="bi bi-check2-circle text-primary me-2"></i> Mixed-Team Collaboration Guard</span></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="border-secondary border-opacity-25 my-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 small text-secondary">
+      <div>&copy; 2026 Collaborative Project Management System (CPMS). All academic rights reserved.</div>
+      <div class="d-flex gap-3">
+        <span class="text-white-50"><i class="bi bi-shield-check text-success me-1"></i> Role-Based Governance</span>
+        <span class="text-white-50"><i class="bi bi-cpu text-info me-1"></i> AI Advisory Reports</span>
+      </div>
+    </div>
   </div>
 </footer>
 

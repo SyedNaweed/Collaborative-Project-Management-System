@@ -65,15 +65,12 @@ app.use('/student', require('./routes/studentRoutes'));
 app.use('/faculty', require('./routes/facultyRoutes'));
 app.use('/project', require('./routes/projectRoutes'));
 
-// Root route
+// Root route: Front Landing Page
 app.get('/', (req, res) => {
-  if (req.session && req.session.userId && req.user) {
-    if (req.user.role === 'FACULTY') {
-      return res.redirect('/faculty/dashboard');
-    }
-    return res.redirect('/student/dashboard');
-  }
-  res.redirect('/auth/login');
+  res.render('home', {
+    title: 'CPMS | Collaborative Academic Project Management System',
+    fullWidth: true
+  });
 });
 
 // 404 handler

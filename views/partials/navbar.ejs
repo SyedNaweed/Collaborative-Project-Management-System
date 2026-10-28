@@ -1,59 +1,98 @@
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="/">
-      <i class="bi bi-kanban-fill fs-4 text-primary"></i>
+      <div class="nav-logo-icon">
+        <i class="bi bi-kanban-fill text-white fs-6"></i>
+      </div>
       <span>CPMS</span>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <% if (currentUser) { %>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <% if (currentUser.role === 'STUDENT') { %>
             <li class="nav-item">
-              <a class="nav-link" href="/student/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+              <a class="nav-link" href="/student/dashboard"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/student/select-faculty"><i class="bi bi-person-lines-fill"></i> Faculty List</a>
+              <a class="nav-link" href="/student/select-faculty"><i class="bi bi-person-lines-fill me-1"></i> Faculty List</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/student/create-team"><i class="bi bi-people-fill"></i> Create Team</a>
+              <a class="nav-link" href="/student/create-team"><i class="bi bi-people-fill me-1"></i> Create Team</a>
             </li>
           <% } else if (currentUser.role === 'FACULTY') { %>
             <li class="nav-item">
-              <a class="nav-link" href="/faculty/dashboard"><i class="bi bi-speedometer2"></i> Faculty Dashboard</a>
+              <a class="nav-link" href="/faculty/dashboard"><i class="bi bi-speedometer2 me-1"></i> Faculty Dashboard</a>
             </li>
           <% } %>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/#portals"><i class="bi bi-door-open me-1"></i> Portals</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#lifecycle"><i class="bi bi-diagram-3 me-1"></i> Lifecycle</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#features"><i class="bi bi-stars me-1"></i> Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#faq"><i class="bi bi-question-circle me-1"></i> FAQ</a>
+          </li>
         <% } %>
       </ul>
 
-      <div class="d-flex align-items-center gap-3">
-        <% if (currentUser) { %>
-          <div class="text-white-50 small d-none d-md-block text-end">
-            <div class="text-white fw-semibold"><%= currentUser.fullName %></div>
+      <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+          <div class="text-white-50 small d-none d-md-block text-end me-2">
+            <div class="text-white fw-semibold" style="line-height: 1.2;"><%= currentUser.fullName %></div>
             <% if (currentUser.role === 'STUDENT') { %>
-              <span class="badge <%= currentUser.studentType === 'INTERNAL' ? 'badge-internal' : 'badge-external' %>">
+              <span class="badge <%= currentUser.studentType === 'INTERNAL' ? 'badge-internal' : 'badge-external' %>" style="font-size: 0.68rem;">
                 <%= currentUser.studentType %> STUDENT
               </span>
             <% } else { %>
-              <span class="badge badge-faculty">FACULTY</span>
+              <span class="badge badge-faculty" style="font-size: 0.68rem;">FACULTY GUIDE</span>
             <% } %>
           </div>
-          <a href="/auth/logout" class="btn btn-outline-light btn-sm rounded-pill px-3">
+          <a href="/auth/account-settings" class="btn btn-outline-light btn-sm rounded-pill px-3">
+            <i class="bi bi-gear"></i> Settings
+          </a>
+          <a href="/auth/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3">
             <i class="bi bi-box-arrow-right"></i> Logout
           </a>
         <% } else { %>
           <a href="/auth/login" class="btn btn-outline-light btn-sm rounded-pill px-3">
-            <i class="bi bi-box-arrow-in-right"></i> Sign In
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
           </a>
           <div class="dropdown">
             <button class="btn btn-primary-custom btn-sm dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown">
-              Register
+              <i class="bi bi-person-plus me-1"></i> Get Started
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow">
-              <li><a class="dropdown-item" href="/auth/student-register"><i class="bi bi-mortarboard me-2"></i> Student Registration</a></li>
-              <li><a class="dropdown-item" href="/auth/faculty-register"><i class="bi bi-person-badge me-2"></i> Faculty Registration</a></li>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
+              <li>
+                <a class="dropdown-item py-2" href="/auth/student-register">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-mortarboard text-primary fs-5"></i>
+                    <div>
+                      <div class="fw-semibold">Student Registration</div>
+                      <div class="small text-muted" style="font-size: 0.72rem;">Internal & External Students</div>
+                    </div>
+                  </div>
+                </a>
+              </li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li>
+                <a class="dropdown-item py-2" href="/auth/faculty-register">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-badge text-success fs-5"></i>
+                    <div>
+                      <div class="fw-semibold">Faculty Registration</div>
+                      <div class="small text-muted" style="font-size: 0.72rem;">Project Guides & Supervisors</div>
+                    </div>
+                  </div>
+                </a>
+              </li>
             </ul>
           </div>
         <% } %>

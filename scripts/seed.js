@@ -48,7 +48,7 @@ const seedData = async () => {
 
     // 2. Create Internal Students
     const student1 = await User.create({
-      username: 'rahul21',
+      username: 'rahul',
       email: 'rahul.sharma2021@vitstudent.ac.in',
       password: 'password123',
       role: 'STUDENT',
@@ -59,7 +59,7 @@ const seedData = async () => {
     });
 
     const student2 = await User.create({
-      username: 'ananya21',
+      username: 'ananyapatel',
       email: 'ananya.patel2021@vitstudent.ac.in',
       password: 'password123',
       role: 'STUDENT',
@@ -71,7 +71,7 @@ const seedData = async () => {
 
     // 3. Create External Student (Personal email, No Register Number)
     const student3 = await User.create({
-      username: 'alex_external',
+      username: 'alexvance',
       email: 'alex.collaboration@gmail.com',
       password: 'password123',
       role: 'STUDENT',

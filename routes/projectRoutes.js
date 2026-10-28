@@ -236,6 +236,97 @@ router.post('/task/:taskId/submit', async (req, res) => {
   }
 });
 
+// Faculty Deliverable Verification & Review
+router.post('/task/:taskId/verify', async (req, res) => {
+  try {
+    if (req.user.role !== 'FACULTY') {
+      return res.status(403).json({ success: false, message: 'Only faculty members can verify deliverables.' });
+    }
+
+    const { action, remarks } = req.body;
+    const task = await Task.findById(req.params.taskId);
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found.' });
+    }
+
+    if (!task.submissions || task.submissions.length === 0) {
+      return res.status(400).json({ success: false, message: 'No submissions found to verify.' });
+    }
+
+    const latestSub = task.submissions[task.submissions.length - 1];
+
+    if (action === 'APPROVE') {
+      latestSub.facultyReview = {
+        reviewedAt: new Date(),
+        status: 'APPROVED',
+        remarks: remarks && remarks.trim() ? remarks.trim() : 'Approved by faculty.'
+      };
+      task.status = 'COMPLETED';
+      await task.save();
+
+      return res.json({
+        success: true,
+        message: 'Deliverable approved! Task status marked as COMPLETED.',
+        taskStatus: 'COMPLETED'
+      });
+    } else if (action === 'REQUEST_CHANGES') {
+      latestSub.facultyReview = {
+        reviewedAt: new Date(),
+        status: 'CHANGES_REQUESTED',
+        remarks: remarks && remarks.trim() ? remarks.trim() : 'Changes requested. Please submit updated version.'
+      };
+      task.status = 'IN_PROGRESS';
+      await task.save();
+
+      return res.json({
+        success: true,
+        message: 'Changes requested! Task returned to IN_PROGRESS for revision.',
+        taskStatus: 'IN_PROGRESS'
+      });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid verification action.' });
+    }
+  } catch (err) {
+    console.error('Deliverable Verification Error:', err);
+    return res.status(500).json({ success: false, message: 'Error verifying deliverable.' });
+  }
+});
+
+// Student Proposal Resubmission (when REVISION_REQUESTED)
+router.post('/:id/resubmit-proposal', async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    if (!title || !title.trim() || !description || !description.trim()) {
+      return res.status(400).json({ success: false, message: 'Title and description are required.' });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
+
+    if (project.status !== 'REVISION_REQUESTED') {
+      return res.status(400).json({ success: false, message: 'Only projects in REVISION_REQUESTED status can be resubmitted.' });
+    }
+
+    project.title = title.trim();
+    project.description = description.trim();
+    project.status = 'PROPOSED';
+    project.revisionNotes = null;
+    await project.save();
+
+    return res.json({
+      success: true,
+      message: 'Revised project proposal submitted for faculty review!',
+      redirectUrl: `/project/${project._id}/workspace`
+    });
+  } catch (err) {
+    console.error('Proposal Resubmission Error:', err);
+    return res.status(500).json({ success: false, message: 'Error resubmitting proposal.' });
+  }
+});
+
 // Create Issue / Doubt
 router.post('/:id/create-issue', async (req, res) => {
   try {

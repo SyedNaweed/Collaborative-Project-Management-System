@@ -52,9 +52,9 @@
           </label>
           <div class="input-group">
             <span class="input-group-text bg-light text-muted"><i class="bi bi-card-text"></i></span>
-            <input type="text" class="form-control text-uppercase" id="registerNumber" name="registerNumber" placeholder="e.g. 21BCE1001">
+            <input type="text" class="form-control text-uppercase" id="registerNumber" name="registerNumber" placeholder="e.g. 22BIT0061">
           </div>
-          <div class="form-text small text-muted">Required for Internal students only.</div>
+          <div class="form-text small text-muted">Format: 2 numbers, 3 alphabets, and 4 numbers (e.g. 22BIT0061).</div>
           <div class="invalid-feedback" id="registerNumberError"></div>
         </div>
 
@@ -90,8 +90,9 @@
           <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
           <div class="input-group">
             <span class="input-group-text bg-light text-muted">@</span>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Choose unique username" required>
+            <input type="text" class="form-control" id="username" name="username" placeholder="Alphabetic only (e.g. naweed)" required>
           </div>
+          <div class="form-text small text-muted">Must contain only alphabetic letters (no numbers or special characters).</div>
           <div class="invalid-feedback" id="usernameError"></div>
         </div>
 

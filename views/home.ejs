@@ -1,0 +1,671 @@
+<%- include('partials/header', { title: 'CPMS | Collaborative Academic Project Management System', fullWidth: true }) %>
+
+<!-- 1. HERO SECTION -->
+<section class="hero-wrapper py-5 py-lg-6 position-relative text-white">
+  <div class="hero-grid-pattern"></div>
+  <div class="container position-relative py-4 py-lg-5">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7 text-center text-lg-start">
+        <div class="hero-pill-badge mb-3">
+          <i class="bi bi-stars text-warning"></i>
+          <span>Academic Project Governance & Collaboration Platform</span>
+        </div>
+        <h1 class="hero-title mb-3">
+          Where Academic Vision Meets Seamless Execution.
+        </h1>
+        <p class="hero-subtitle mb-4">
+          A unified, high-integrity platform uniting university students and faculty guides. Organize cross-cohort teams, submit iterative deliverables, leverage AI-assisted code & quality checks, and streamline faculty verification in one centralized workspace.
+        </p>
+        
+        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start mb-5">
+          <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+            <% if (currentUser.role === 'STUDENT') { %>
+              <a href="/student/dashboard" class="btn-get-started">
+                <i class="bi bi-speedometer2"></i>
+                <span>Go to Student Dashboard</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            <% } else { %>
+              <a href="/faculty/dashboard" class="btn-get-started">
+                <i class="bi bi-speedometer2"></i>
+                <span>Go to Faculty Dashboard</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            <% } %>
+          <% } else { %>
+            <a href="#portals" class="btn-get-started">
+              <span>Get Started</span>
+              <i class="bi bi-arrow-down-circle-fill"></i>
+            </a>
+            <a href="/auth/login" class="btn-hero-secondary">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span>Sign In to Portal</span>
+            </a>
+          <% } %>
+        </div>
+
+        <!-- Trust Stats Badges -->
+        <div class="row g-3 pt-2">
+          <div class="col-6 col-sm-3">
+            <div class="stat-box">
+              <div class="stat-value">40+</div>
+              <div class="stat-label">Validation Rules</div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="stat-box">
+              <div class="stat-value">2–7</div>
+              <div class="stat-label">Teams / Faculty</div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="stat-box">
+              <div class="stat-value">1–9</div>
+              <div class="stat-label">Students / Team</div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="stat-box">
+              <div class="stat-value">100%</div>
+              <div class="stat-label">AI & Guide Audited</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Interactive Preview Showcase -->
+      <div class="col-lg-5">
+        <div class="hero-showcase-glass p-4 text-white">
+          <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom border-white border-opacity-10">
+            <div class="d-flex align-items-center gap-2">
+              <span class="status-indicator-dot"></span>
+              <span class="small fw-semibold text-white-50">LIVE WORKSPACE PREVIEW</span>
+            </div>
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 font-mono small">
+              PROJ-2026-v2
+            </span>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-white-50 small mb-1">Active Project</div>
+            <h5 class="fw-bold text-white mb-2">Cloud-Native Distributed Task Orchestrator</h5>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary border-opacity-50 small">
+                <i class="bi bi-people-fill me-1"></i> Team Edukku (3 Members)
+              </span>
+              <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 small">
+                <i class="bi bi-shuffle me-1"></i> Mixed Cohort
+              </span>
+            </div>
+          </div>
+
+          <!-- Mini Tasks List -->
+          <div class="bg-dark bg-opacity-50 p-3 rounded-3 mb-3 border border-white border-opacity-10">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-bold text-white">Task Deliverable #3</span>
+              <span class="badge bg-warning text-dark fw-bold small">IN_REVIEW</span>
+            </div>
+            <p class="small text-white-50 mb-2">REST API & MongoDB Form Validation Engine</p>
+            
+            <!-- AI Verification Box inside preview -->
+            <div class="p-2 rounded-2" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="small text-indigo fw-bold text-white" style="font-size: 0.78rem;">
+                  <i class="bi bi-robot text-primary me-1"></i> AI Advisory Report
+                </span>
+                <span class="badge bg-success text-white small" style="font-size: 0.7rem;">94% Alignment</span>
+              </div>
+              <div class="text-white-50" style="font-size: 0.74rem;">
+                No scope anomalies detected. Clean modular architecture confirmed.
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between pt-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center text-primary fw-bold" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                SK
+              </div>
+              <div class="small">
+                <div class="fw-semibold text-white">Dr. Suresh Kumar</div>
+                <div class="text-white-50" style="font-size: 0.7rem;">Faculty Guide (EMP1002)</div>
+              </div>
+            </div>
+            <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-50 small">
+              <i class="bi bi-check2-all me-1"></i> Ready to Verify
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. ROLE GATEWAY PORTALS ("GET STARTED" SECTION) -->
+<section id="portals" class="py-5 bg-white position-relative">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase small mb-2">
+        <i class="bi bi-door-open me-1"></i> Choose Your Academic Path
+      </span>
+      <h2 class="fw-bold text-dark mb-2">Get Started With Dedicated Portals</h2>
+      <p class="text-muted" style="max-width: 600px; margin: 0 auto;">
+        Whether you are a university student building your capstone team or a faculty member guiding academic excellence, CPMS provides dedicated workflows.
+      </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <!-- Student Portal Card -->
+      <div class="col-md-6 col-lg-5">
+        <div class="portal-card">
+          <div class="portal-icon-wrapper portal-icon-student">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge badge-internal">Internal Students</span>
+            <span class="badge badge-external">External Students</span>
+          </div>
+          <h3 class="fw-bold text-dark mb-2">Student Portal</h3>
+          <p class="text-muted small mb-4">
+            Register with institutional (<span class="font-mono">@vitstudent.ac.in</span>) or verified external email. Select faculty guides, assemble teams up to 9 members, and track versioned task submissions.
+          </p>
+
+          <div class="border-top pt-3 mb-4 flex-grow-1">
+            <h6 class="text-dark fw-bold small text-uppercase mb-3" style="letter-spacing: 0.5px;">Student Capabilities:</h6>
+            <ul class="list-unstyled small d-flex flex-column gap-2 mb-0 text-secondary">
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Register under faculty within real-time capacity</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Form mixed Internal & External teams with explicit declaration</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Propose project titles with automated revision cycles</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Submit deliverable repositories and inspect AI similarity scores</li>
+            </ul>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="/auth/student-register" class="btn btn-primary-custom py-2">
+              <i class="bi bi-person-plus-fill me-1"></i> Register as Student
+            </a>
+            <a href="/auth/login" class="btn btn-outline-secondary btn-sm py-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Student Sign In
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Faculty Portal Card -->
+      <div class="col-md-6 col-lg-5">
+        <div class="portal-card">
+          <div class="portal-icon-wrapper portal-icon-faculty">
+            <i class="bi bi-person-badge-fill"></i>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge badge-faculty">Project Guides</span>
+            <span class="badge bg-light text-secondary border">Capacity: 2 to 7 Teams</span>
+          </div>
+          <h3 class="fw-bold text-dark mb-2">Faculty Guide Portal</h3>
+          <p class="text-muted small mb-4">
+            Register using official faculty email (<span class="font-mono">@vit.ac.in</span>). Oversee project proposals, inspect deliverable version histories, evaluate AI quality reports, and authorize milestone completions.
+          </p>
+
+          <div class="border-top pt-3 mb-4 flex-grow-1">
+            <h6 class="text-dark fw-bold small text-uppercase mb-3" style="letter-spacing: 0.5px;">Faculty Capabilities:</h6>
+            <ul class="list-unstyled small d-flex flex-column gap-2 mb-0 text-secondary">
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Define team-handling capacity strictly between 2 and 7</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Approve or request revisions on student project proposals</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Check deliverables, review AI advisory insights & version diffs</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i> Approve deliverables or mandate rework with custom remarks</li>
+            </ul>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="/auth/faculty-register" class="btn btn-success py-2 fw-bold" style="border-radius: 10px;">
+              <i class="bi bi-person-badge-fill me-1"></i> Register as Faculty
+            </a>
+            <a href="/auth/login" class="btn btn-outline-secondary btn-sm py-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Faculty Sign In
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. PROJECT LIFECYCLE (5 STAGES) -->
+<section id="lifecycle" class="py-5" style="background-color: #f1f5f9;">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-indigo bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase small mb-2">
+        <i class="bi bi-diagram-3 me-1"></i> Standard Academic Pipeline
+      </span>
+      <h2 class="fw-bold text-dark mb-2">5-Stage Academic Project Lifecycle</h2>
+      <p class="text-muted" style="max-width: 620px; margin: 0 auto;">
+        From initial guide allocation to formal final evaluation, every phase is governed by strict system constraints and role-based actions.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Step 1 -->
+      <div class="col-md-6 col-lg">
+        <div class="timeline-step-card">
+          <div class="timeline-number">01</div>
+          <h6 class="fw-bold text-dark mb-2">Guide Allocation & Team Assembly</h6>
+          <p class="text-muted small mb-0">
+            Internal & External students select faculty within capacity limits and form squads (1–9 members) with mandatory mixed-cohort declarations.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="col-md-6 col-lg">
+        <div class="timeline-step-card">
+          <div class="timeline-number">02</div>
+          <h6 class="fw-bold text-dark mb-2">Proposal & Revision Loop</h6>
+          <p class="text-muted small mb-0">
+            Teams submit formal proposals. Faculty reviews, approves, or marks <span class="badge bg-warning text-dark" style="font-size:0.65rem;">REVISION_REQUESTED</span> with structured edit cycles.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="col-md-6 col-lg">
+        <div class="timeline-step-card">
+          <div class="timeline-number">03</div>
+          <h6 class="fw-bold text-dark mb-2">Kanban & Task Assignment</h6>
+          <p class="text-muted small mb-0">
+            Deconstruct milestones into granular tasks with assignees, strict deadlines, priority levels, and dependency chains.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="col-md-6 col-lg">
+        <div class="timeline-step-card">
+          <div class="timeline-number">04</div>
+          <h6 class="fw-bold text-dark mb-2">AI Deliverable Analysis</h6>
+          <p class="text-muted small mb-0">
+            Upon submission, our AI engine computes scope alignment, inspects code similarity, and attaches an advisory quality report.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="col-md-6 col-lg">
+        <div class="timeline-step-card">
+          <div class="timeline-number">05</div>
+          <h6 class="fw-bold text-dark mb-2">Faculty Verification & Rubrics</h6>
+          <p class="text-muted small mb-0">
+            Faculty inspects deliverable versions and AI reports, decides <span class="text-success fw-bold">Approve</span> or <span class="text-danger fw-bold">Request Rework</span>, and inputs final grades.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. KEY PLATFORM FEATURES -->
+<section id="features" class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold text-uppercase small mb-2">
+        <i class="bi bi-shield-check me-1"></i> Enterprise Grade Quality
+      </span>
+      <h2 class="fw-bold text-dark mb-2">Engineered For Integrity & Collaboration</h2>
+      <p class="text-muted" style="max-width: 600px; margin: 0 auto;">
+        Built with strict multi-layer validation, preventing duplicate registrations, capacity breaches, and unverified deliverable submissions.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-input-cursor-text"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Strict Multi-Layer Validations</h5>
+          <p class="text-muted small mb-0">
+            Purely alphabetic usernames (no numbers or special characters allowed), strictly formatted Register Numbers (2 digits, 3 letters, 4 digits), and domain-restricted email checks.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-shield-shaded"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Mixed-Cohort Collaboration</h5>
+          <p class="text-muted small mb-0">
+            Teams combining Internal and External students must formally agree to the collaborative declaration before team creation is authorized by the system.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-info bg-opacity-10 text-info">
+            <i class="bi bi-robot"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">AI Advisory Quality Auditing</h5>
+          <p class="text-muted small mb-0">
+            Every submitted deliverable automatically triggers an AI inspection report displaying task alignment scores, code syntax integrity, and advisory warnings for faculty review.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-success bg-opacity-10 text-success">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Faculty Guide Verification</h5>
+          <p class="text-muted small mb-0">
+            Deliverables in review are strictly audited by faculty. Guides inspect version diffs, provide feedback remarks, and either mark COMPLETED or send back to IN_PROGRESS.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-purple bg-opacity-10 text-purple" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Version History Preservation</h5>
+          <p class="text-muted small mb-0">
+            Never lose progress. Prior iterations, repository URLs, AI scores, and faculty rework remarks remain permanently preserved in an immutable version log.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-tile">
+          <div class="feature-icon-box bg-danger bg-opacity-10 text-danger">
+            <i class="bi bi-lock-fill"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Single-Use OTP Security</h5>
+          <p class="text-muted small mb-0">
+            Email verification, password recovery, and username updates require cryptographic 6-digit OTP codes enforced with purpose-specific validation and single-use safeguards.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. INTERACTIVE SHOWCASE TABS -->
+<section class="py-5" style="background-color: #0a0f1d; color: white;">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="hero-pill-badge mb-2">
+        <i class="bi bi-laptop me-1"></i> Interactive Platform Walkthrough
+      </span>
+      <h2 class="fw-bold text-white mb-2">Experience The Integrated Workspace</h2>
+      <p class="text-light text-opacity-75" style="max-width: 600px; margin: 0 auto;">
+        Click below to inspect real interactive views from the student project workspace and faculty deliverable verification hub.
+      </p>
+
+      <!-- Tab Buttons -->
+      <ul class="nav nav-pills nav-pills-custom justify-content-center gap-2 mt-4" id="previewTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="tab-student" data-bs-toggle="pill" data-bs-target="#preview-student" type="button" role="tab">
+            <i class="bi bi-kanban me-1"></i> Student Kanban & Submissions
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-faculty" data-bs-toggle="pill" data-bs-target="#preview-faculty" type="button" role="tab">
+            <i class="bi bi-check2-square me-1"></i> Faculty Verification & AI Report
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-collaboration" data-bs-toggle="pill" data-bs-target="#preview-collaboration" type="button" role="tab">
+            <i class="bi bi-people me-1"></i> Mixed Cohort Governance
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="tab-content" id="previewTabsContent">
+      <!-- Tab 1: Student Workspace -->
+      <div class="tab-pane fade show active" id="preview-student" role="tabpanel">
+        <div class="hero-showcase-glass p-4 p-md-5">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+              <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 mb-2">
+                STUDENT EXPERIENCE
+              </span>
+              <h3 class="fw-bold text-white mb-3">Structured Task Execution</h3>
+              <p class="text-light text-opacity-75 mb-4">
+                Students track project milestones using an agile board with real-time status transitions. Assigned team members submit deliverable URLs, triggering automated AI analysis and updating the task to <span class="badge bg-warning text-dark">IN_REVIEW</span>.
+              </p>
+              <div class="d-flex flex-column gap-2 text-light text-opacity-75 small">
+                <div><i class="bi bi-check-lg text-primary me-2"></i> Only assigned students can submit work for that specific task.</div>
+                <div><i class="bi bi-check-lg text-primary me-2"></i> Uncompleted dependencies block submission until prerequisites finish.</div>
+                <div><i class="bi bi-check-lg text-primary me-2"></i> Instant version tracking on every resubmission.</div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="bg-dark p-3 rounded-4 border border-white border-opacity-10 shadow">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="text-white fw-bold small"><i class="bi bi-kanban me-1 text-primary"></i> Sprint Tasks</span>
+                  <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 small">Active Project</span>
+                </div>
+                <!-- Mock Kanban Card -->
+                <div class="bg-dark bg-opacity-75 p-3 rounded-3 mb-2 border border-white border-opacity-10">
+                  <div class="d-flex justify-content-between small text-white-50 mb-1">
+                    <span>Task #2 &bull; API Endpoints</span>
+                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">IN_REVIEW</span>
+                  </div>
+                  <div class="fw-semibold text-white small mb-2">Build Express REST Controllers & Domain Validators</div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-white-50" style="font-size: 0.72rem;">Assigned: @ananyapatel</span>
+                    <button class="btn btn-outline-light btn-sm py-0 px-2" style="font-size: 0.72rem;" disabled>
+                      <i class="bi bi-clock-history me-1"></i> Version 1 Submitted
+                    </button>
+                  </div>
+                </div>
+                <!-- Mock Kanban Card 2 -->
+                <div class="bg-dark bg-opacity-75 p-3 rounded-3 border border-white border-opacity-10">
+                  <div class="d-flex justify-content-between small text-white-50 mb-1">
+                    <span>Task #1 &bull; Schema Model</span>
+                    <span class="badge bg-success text-white" style="font-size: 0.65rem;">COMPLETED</span>
+                  </div>
+                  <div class="fw-semibold text-white small mb-1">Database Schema & Index Constraints</div>
+                  <span class="text-success small" style="font-size: 0.72rem;"><i class="bi bi-check-circle-fill me-1"></i> Verified by Dr. Suresh Kumar</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Faculty Verification -->
+      <div class="tab-pane fade" id="preview-faculty" role="tabpanel">
+        <div class="hero-showcase-glass p-4 p-md-5">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+              <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 mb-2">
+                FACULTY VERIFICATION HUB
+              </span>
+              <h3 class="fw-bold text-white mb-3">Deliverable Audit & AI Oversight</h3>
+              <p class="text-light text-opacity-75 mb-4">
+                Faculty guides inspect deliverable repositories with complete version histories. Review the AI-Assisted scope verification report, similarity index, and advisory flags, then approve or request rework with precise remarks.
+              </p>
+              <div class="d-flex flex-column gap-2 text-light text-opacity-75 small">
+                <div><i class="bi bi-check-lg text-success me-2"></i> One-click "Check & Verify Deliverable" dialog in project workspace.</div>
+                <div><i class="bi bi-check-lg text-success me-2"></i> Approve Deliverable: automatically transitions task to COMPLETED.</div>
+                <div><i class="bi bi-check-lg text-success me-2"></i> Request Rework: returns task to IN_PROGRESS with faculty feedback.</div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <!-- Faculty Verification Modal Preview -->
+              <div class="bg-dark p-4 rounded-4 border border-white border-opacity-10 shadow">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="text-white fw-bold small"><i class="bi bi-shield-check text-success me-1"></i> Faculty Review Portal</span>
+                  <span class="badge bg-primary text-white small">Version 1 Review</span>
+                </div>
+                <div class="p-3 rounded-3 mb-3" style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold text-white"><i class="bi bi-robot me-1 text-primary"></i> AI Similarity & Scope Metric</span>
+                    <span class="badge bg-success">92% Match</span>
+                  </div>
+                  <div class="small text-white-50" style="font-size: 0.74rem;">
+                    Full alignment with sprint specification. Zero plagiarism flags detected.
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-success btn-sm w-50 py-2 fw-semibold" disabled>
+                    <i class="bi bi-check-circle me-1"></i> Approve Deliverable
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm w-50 py-2 fw-semibold" disabled>
+                    <i class="bi bi-arrow-repeat me-1"></i> Request Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Mixed Cohort Governance -->
+      <div class="tab-pane fade" id="preview-collaboration" role="tabpanel">
+        <div class="hero-showcase-glass p-4 p-md-5">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+              <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 mb-2">
+                COHORT GOVERNANCE
+              </span>
+              <h3 class="fw-bold text-white mb-3">Transparent Dual-Student Collaboration</h3>
+              <p class="text-light text-opacity-75 mb-4">
+                Universities benefit when campus-enrolled students partner with external collaborators. CPMS automatically detects when a team contains both student cohorts and mandates an explicit collaboration declaration before submission.
+              </p>
+              <div class="d-flex flex-column gap-2 text-light text-opacity-75 small">
+                <div><i class="bi bi-check-lg text-warning me-2"></i> Internal students verified via institutional <span class="font-mono">@vitstudent.ac.in</span>.</div>
+                <div><i class="bi bi-check-lg text-warning me-2"></i> External students use personal emails with strict VIT domain blocks.</div>
+                <div><i class="bi bi-check-lg text-warning me-2"></i> Real-time check ensures students cannot belong to two active teams.</div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="bg-dark p-4 rounded-4 border border-white border-opacity-10 shadow">
+                <div class="collaboration-callout mb-0 bg-opacity-10 border-warning">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                    <span class="fw-bold text-warning small">Mixed Student Cohort Detected</span>
+                  </div>
+                  <p class="small text-white-50 mb-3">
+                    Team "CyberOrchestrators" contains 2 Internal students and 1 External collaborator.
+                  </p>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="mockCheckbox" checked disabled>
+                    <label class="form-check-label text-white small fw-bold" for="mockCheckbox">
+                      I confirm that this team is an authorized collaboration between Internal and External students.
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. FREQUENTLY ASKED QUESTIONS (FAQ) -->
+<section id="faq" class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-bold text-uppercase small mb-2">
+        <i class="bi bi-question-circle me-1"></i> Help & Guidance
+      </span>
+      <h2 class="fw-bold text-dark mb-2">Frequently Asked Questions</h2>
+      <p class="text-muted" style="max-width: 580px; margin: 0 auto;">
+        Quick answers regarding validation formats, faculty supervision capacities, and verification workflows.
+      </p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="accordion accordion-flush shadow-sm rounded-4 border" id="accordionFaq">
+          <!-- Item 1 -->
+          <div class="accordion-item rounded-top-4">
+            <h2 class="accordion-header" id="faqHeading1">
+              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1">
+                What are the exact Username and Register Number format rules?
+              </button>
+            </h2>
+            <div id="faqCollapse1" class="accordion-collapse collapse" data-bs-parent="#accordionFaq">
+              <div class="accordion-body text-secondary small">
+                <strong>Username:</strong> Must contain purely alphabetic letters (A–Z, a–z) with a minimum length of 3 characters. Absolutely no numbers (0–9) or special characters (such as underscores, hyphens, or symbols) are permitted.<br><br>
+                <strong>Register Number:</strong> Required for all Internal students. Must strictly follow the university format of <strong>2 numbers, followed by 3 letters, followed by 4 numbers</strong> (e.g. <span class="font-mono text-dark fw-bold">22BIT0061</span>).
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="faqHeading2">
+              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2">
+                What is the difference between Internal and External students?
+              </button>
+            </h2>
+            <div id="faqCollapse2" class="accordion-collapse collapse" data-bs-parent="#accordionFaq">
+              <div class="accordion-body text-secondary small">
+                <strong>Internal Students:</strong> Enrolled in on-campus university programs. They must register with an institutional email ending in <span class="font-mono">@vitstudent.ac.in</span> and supply their valid 9-character Register Number.<br><br>
+                <strong>External Students:</strong> Industry or inter-university collaborators. They register with personal email addresses (e.g. Gmail, Outlook) and are strictly prohibited from using institutional VIT email domains.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="faqHeading3">
+              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3">
+                How does Faculty Deliverable Verification work?
+              </button>
+            </h2>
+            <div id="faqCollapse3" class="accordion-collapse collapse" data-bs-parent="#accordionFaq">
+              <div class="accordion-body text-secondary small">
+                When a student submits a deliverable URL, the task transitions to <span class="badge bg-warning text-dark">IN_REVIEW</span> and an automated AI report assesses scope alignment. The assigned Faculty Guide opens the task, reviews the submission diff and AI insights, and clicks either <strong>Approve Deliverable</strong> (marking it COMPLETED) or <strong>Request Changes</strong> (returning it to IN_PROGRESS with feedback remarks).
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 4 -->
+          <div class="accordion-item rounded-bottom-4">
+            <h2 class="accordion-header" id="faqHeading4">
+              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4">
+                What are the Faculty Guide team-handling capacity limits?
+              </button>
+            </h2>
+            <div id="faqCollapse4" class="accordion-collapse collapse" data-bs-parent="#accordionFaq">
+              <div class="accordion-body text-secondary small">
+                Every faculty guide configures an active team-handling capacity strictly between <strong>2 and 7 concurrent teams</strong> upon registration. When a guide reaches their maximum allocated teams, student teams are automatically prevented from selecting that guide until an ongoing project finishes.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. CALL TO ACTION BANNER -->
+<section class="py-5 text-white position-relative" style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border-top: 1px solid rgba(255, 255, 255, 0.08);">
+  <div class="container text-center py-4">
+    <h2 class="fw-bold mb-3">Ready to Elevate Your Academic Project Experience?</h2>
+    <p class="text-white-50 mb-4" style="max-width: 580px; margin: 0 auto;">
+      Join university faculty guides and student innovators today. Build compliant teams, submit verified deliverables, and graduate with distinction.
+    </p>
+    <div class="d-flex flex-wrap gap-3 justify-content-center">
+      <a href="#portals" class="btn-get-started">
+        <span>Get Started Now</span>
+        <i class="bi bi-arrow-right"></i>
+      </a>
+      <a href="/auth/login" class="btn-hero-secondary">
+        <i class="bi bi-box-arrow-in-right"></i>
+        <span>Sign In to Your Account</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer', { fullWidth: true }) %>

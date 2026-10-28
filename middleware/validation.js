@@ -24,11 +24,13 @@ const validateStudentRegistration = async (req, res, next) => {
     errors.fullName = 'Full name is required.';
   }
 
-  // Username
+  // Username: alphabetic letters only, no numbers or special characters
   if (!username || !username.trim()) {
     errors.username = 'Username is required.';
   } else if (username.trim().length < 3) {
     errors.username = 'Username must be at least 3 characters.';
+  } else if (!/^[a-zA-Z]+$/.test(username.trim())) {
+    errors.username = 'Username must contain only alphabetic letters (no numbers or special characters allowed).';
   } else {
     const existingUser = await User.findOne({ username: username.trim().toLowerCase() });
     if (existingUser) {
@@ -62,15 +64,20 @@ const validateStudentRegistration = async (req, res, next) => {
     }
   }
 
-  // Register Number conditional validation
+  // Register Number conditional validation: 2 numbers, 3 alphabets, 4 numbers
   if (studentType === 'INTERNAL') {
     if (!registerNumber || !registerNumber.trim()) {
       errors.registerNumber = 'Register Number is mandatory for Internal students.';
     } else {
       const cleanRegNo = registerNumber.trim().toUpperCase();
-      const existingReg = await User.findOne({ registerNumber: cleanRegNo });
-      if (existingReg) {
-        errors.registerNumber = 'Register Number is already registered.';
+      const regNoRegex = /^[0-9]{2}[A-Z]{3}[0-9]{4}$/;
+      if (!regNoRegex.test(cleanRegNo)) {
+        errors.registerNumber = 'Register Number must follow the format: 2 numbers, 3 alphabets, and 4 numbers (e.g. 22BIT0061).';
+      } else {
+        const existingReg = await User.findOne({ registerNumber: cleanRegNo });
+        if (existingReg) {
+          errors.registerNumber = 'Register Number is already registered.';
+        }
       }
     }
   }
@@ -139,6 +146,8 @@ const validateFacultyRegistration = async (req, res, next) => {
     errors.username = 'Username is required.';
   } else if (username.trim().length < 3) {
     errors.username = 'Username must be at least 3 characters.';
+  } else if (!/^[a-zA-Z]+$/.test(username.trim())) {
+    errors.username = 'Username must contain only alphabetic letters (no numbers or special characters allowed).';
   } else {
     const existingUser = await User.findOne({ username: username.trim().toLowerCase() });
     if (existingUser) {

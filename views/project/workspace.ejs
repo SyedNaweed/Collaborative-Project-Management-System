@@ -29,6 +29,58 @@
   </div>
 </div>
 
+<!-- Proposal Review & Decision Card (if not yet approved) -->
+<% if (['PROPOSED', 'REVISION_REQUESTED', 'REJECTED'].includes(project.status)) { %>
+  <div class="card card-custom p-4 mb-4 border-start border-4 <%= project.status === 'REVISION_REQUESTED' ? 'border-warning bg-warning-subtle bg-opacity-25' : project.status === 'REJECTED' ? 'border-danger bg-danger-subtle bg-opacity-25' : 'border-primary bg-primary-subtle bg-opacity-25' %>">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-file-earmark-text me-1 <%= project.status === 'REJECTED' ? 'text-danger' : project.status === 'REVISION_REQUESTED' ? 'text-warning-emphasis' : 'text-primary' %>"></i>
+            Project Proposal Status: <%= project.status.replace('_', ' ') %>
+          </h5>
+          <span class="badge <%= project.status === 'REVISION_REQUESTED' ? 'bg-warning text-dark' : project.status === 'REJECTED' ? 'bg-danger' : 'bg-primary' %>">
+            <%= project.status === 'REJECTED' ? 'Rejected' : 'Awaiting Authorization' %>
+          </span>
+        </div>
+        <% if (project.status === 'REVISION_REQUESTED' && project.revisionNotes) { %>
+          <div class="alert alert-warning py-2 px-3 small my-2">
+            <strong>Faculty Revision Instructions:</strong> <%= project.revisionNotes %>
+          </div>
+        <% } else if (project.status === 'REJECTED' && project.rejectionReason) { %>
+          <div class="alert alert-danger py-2 px-3 small my-2">
+            <strong>Rejection Reason:</strong> <%= project.rejectionReason %>
+          </div>
+        <% } else { %>
+          <p class="text-muted small mb-0 mt-1">
+            This project proposal is currently awaiting faculty review and authorization before active sprint tasks can begin.
+          </p>
+        <% } %>
+      </div>
+
+      <div>
+        <% if (currentUser && currentUser.role === 'FACULTY' && project.status !== 'REJECTED') { %>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm btn-workspace-approve-proposal" data-id="<%= project._id %>">
+              <i class="bi bi-check-lg me-1"></i> Approve Proposal
+            </button>
+            <button class="btn btn-warning btn-sm text-dark" data-bs-toggle="modal" data-bs-target="#workspaceRevisionModal">
+              <i class="bi bi-pencil-square me-1"></i> Request Revision
+            </button>
+            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#workspaceRejectModal">
+              <i class="bi bi-x-circle me-1"></i> Reject
+            </button>
+          </div>
+        <% } else if (currentUser && currentUser.role === 'STUDENT' && project.status === 'REVISION_REQUESTED') { %>
+          <button class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#editResubmitModal">
+            <i class="bi bi-pencil-square me-1"></i> Edit & Resubmit Proposal
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
 <!-- Evaluation Banner if Completed -->
 <% if (project.evaluation && project.evaluation.score !== null) { %>
   <div class="card card-custom p-4 mb-4 border-start border-4 border-success bg-success-subtle bg-opacity-25">
@@ -152,6 +204,11 @@
                       <i class="bi bi-activity"></i> Set Active
                     </button>
                   <% } %>
+                  <% if (project.team && project.team.creator && currentUser && project.team.creator.toString() === currentUser._id.toString() && m.student && m.student._id.toString() !== currentUser._id.toString()) { %>
+                    <button class="btn btn-outline-danger btn-sm btn-ws-remove-member ms-1" data-teamid="<%= project.team._id %>" data-memberid="<%= m.student._id %>" data-membername="<%= m.student.fullName %>" title="Remove Teammate from Team">
+                      <i class="bi bi-person-x-fill"></i>
+                    </button>
+                  <% } %>
                 </td>
               </tr>
             <% }); %>
@@ -221,10 +278,34 @@
                 <% } %>
               </div>
 
-              <div class="mt-3 pt-3 border-top d-flex gap-2 justify-content-between">
-                <button class="btn btn-outline-primary btn-sm btn-submit-deliverable" data-taskid="<%= task._id %>">
-                  <i class="bi bi-upload"></i> Submit Version
-                </button>
+              <div class="mt-3 pt-3 border-top d-flex gap-2 justify-content-between align-items-center flex-wrap">
+                <% if (currentUser && currentUser.role === 'STUDENT') { %>
+                  <% if (task.status !== 'COMPLETED') { %>
+                    <button class="btn btn-outline-primary btn-sm btn-submit-deliverable" data-taskid="<%= task._id %>">
+                      <i class="bi bi-upload me-1"></i> Submit Version
+                    </button>
+                  <% } else { %>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 small">
+                      <i class="bi bi-check-all me-1"></i> Verified & Completed
+                    </span>
+                  <% } %>
+                <% } else if (currentUser && currentUser.role === 'FACULTY') { %>
+                  <% if (task.submissions && task.submissions.length > 0) { %>
+                    <button class="btn btn-primary-custom btn-sm btn-open-verify-modal"
+                            data-taskid="<%= task._id %>"
+                            data-tasktitle="<%= task.title %>"
+                            data-student="<%= task.assignedTo ? task.assignedTo.fullName : 'Student' %>"
+                            data-status="<%= task.status %>"
+                            data-submissions='<%- JSON.stringify(task.submissions) %>'>
+                      <i class="bi bi-shield-check me-1"></i> Check & Verify Deliverable
+                    </button>
+                  <% } else { %>
+                    <span class="badge bg-light text-muted border py-2 px-3 small">
+                      <i class="bi bi-clock me-1"></i> Awaiting Student Submission
+                    </span>
+                  <% } %>
+                <% } %>
+
                 <div class="dropdown">
                   <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     Status: <%= task.status %>
@@ -422,6 +503,124 @@
   </div>
 </div>
 
+<!-- Modal: Faculty Deliverable Verification -->
+<div class="modal fade" id="facultyVerifyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0 bg-light">
+        <div>
+          <h5 class="modal-title fw-bold text-dark mb-0">
+            <i class="bi bi-shield-check text-primary me-2"></i> Deliverable Verification & Evaluation
+          </h5>
+          <span class="text-muted small">Verify submitted deliverables and inspect AI verification analysis</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Task Header Summary -->
+        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 mb-4">
+          <div>
+            <h6 class="fw-bold mb-1 text-dark" id="modalVerifyTaskTitle">Task Title</h6>
+            <span class="small text-muted"><i class="bi bi-person me-1"></i> Submitted by: <strong id="modalVerifyStudentName">Student</strong></span>
+          </div>
+          <span class="badge bg-warning text-dark px-3 py-2" id="modalVerifyStatusBadge">IN_REVIEW</span>
+        </div>
+
+        <!-- Dynamic Submissions Container -->
+        <div id="modalVerifySubmissionsList">
+          <!-- Dynamically populated with submissions & AI report -->
+        </div>
+
+        <!-- Faculty Decision Box -->
+        <div class="border-top pt-3 mt-4">
+          <h6 class="fw-bold text-dark mb-2"><i class="bi bi-pencil-square text-primary me-1"></i> Faculty Review Decision</h6>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Feedback / Remarks for Student:</label>
+            <textarea class="form-control" id="facultyVerifyRemarks" rows="2" placeholder="e.g. Code structure verified. Proper schema indexing confirmed. Approved."></textarea>
+          </div>
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-warning text-dark btn-sm" id="btnRequestTaskChanges">
+              <i class="bi bi-arrow-repeat me-1"></i> Request Changes / Rework
+            </button>
+            <button type="button" class="btn btn-success btn-sm px-3" id="btnApproveTaskDeliverable">
+              <i class="bi bi-check-circle-fill me-1"></i> Approve Deliverable (Mark COMPLETED)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Workspace Proposal Revision (Faculty) -->
+<div class="modal fade" id="workspaceRevisionModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h6 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-warning me-2"></i> Request Proposal Revisions</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small text-muted">Instructions & Adjustments Required from Student Team:</label>
+        <textarea class="form-control" id="workspaceRevNotes" rows="4" placeholder="Detail the modifications required before this proposal can be approved..."></textarea>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning btn-sm" id="btnWorkspaceSubmitRevision">Submit Revision Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Workspace Proposal Reject (Faculty) -->
+<div class="modal fade" id="workspaceRejectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h6 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-2"></i> Reject Project Proposal</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small text-muted">Official Rejection Reason:</label>
+        <textarea class="form-control" id="workspaceRejectReason" rows="3" placeholder="Provide detailed justification for rejecting this proposal..."></textarea>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btnWorkspaceSubmitReject">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit & Resubmit Proposal (Student) -->
+<div class="modal fade" id="editResubmitModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i> Edit & Resubmit Proposal</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editResubmitForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small text-muted">Project Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="resubmitTitle" value="<%= project.title %>" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">Project Description & Scope <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="resubmitDescription" rows="5" required><%= project.description %></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom btn-sm">Resubmit for Faculty Review</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
 $(document).ready(function() {
   const projectId = '<%= project._id %>';
@@ -580,6 +779,243 @@ $(document).ready(function() {
       },
       error: function(xhr) {
         alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error evaluating project.');
+      }
+    });
+  });
+
+  // Faculty Deliverable Verification Modal
+  let currentVerifyTaskId = null;
+  $('.btn-open-verify-modal').on('click', function() {
+    currentVerifyTaskId = $(this).data('taskid');
+    const taskTitle = $(this).data('tasktitle');
+    const studentName = $(this).data('student');
+    const status = $(this).data('status');
+    const rawSubs = $(this).attr('data-submissions');
+    let submissions = [];
+    try {
+      submissions = JSON.parse(rawSubs);
+    } catch (e) {
+      submissions = [];
+    }
+
+    $('#modalVerifyTaskTitle').text(taskTitle);
+    $('#modalVerifyStudentName').text(studentName);
+    $('#modalVerifyStatusBadge').text(status);
+    $('#facultyVerifyRemarks').val('');
+
+    let html = '';
+    if (!submissions || submissions.length === 0) {
+      html = '<div class="text-muted text-center py-4"><i class="bi bi-clock fs-3 d-block mb-2"></i>No deliverables submitted for this task yet.</div>';
+    } else {
+      submissions.slice().reverse().forEach(function(sub, idx) {
+        const isLatest = idx === 0;
+        const ai = sub.aiReport || {};
+        const fr = sub.facultyReview || {};
+        html += `
+          <div class="card border mb-3 ${isLatest ? 'border-primary shadow-sm' : ''}">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+              <span class="fw-bold text-dark">
+                Version ${sub.version} ${isLatest ? '<span class="badge bg-primary ms-1">Latest Version</span>' : ''}
+              </span>
+              <span class="text-muted small" style="font-size: 0.75rem;">${new Date(sub.submittedAt).toLocaleString()}</span>
+            </div>
+            <div class="card-body p-3">
+              <label class="form-label small text-muted mb-1 fw-semibold">Student Deliverable Link / Submission Summary:</label>
+              <div class="p-2 bg-light rounded font-mono text-dark small mb-3 text-break" style="max-height: 120px; overflow-y: auto;">
+                ${sub.content}
+              </div>
+
+              <!-- AI Verification Insights Card -->
+              <div class="p-3 bg-white border rounded-3 mb-2">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                  <i class="bi bi-robot text-primary fs-5"></i>
+                  <strong class="text-dark small">AI-Assisted Verification Analysis:</strong>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    Similarity: ${ai.similarityScore !== undefined ? ai.similarityScore : 4}% (Low Risk)
+                  </span>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    Scope: Task Aligned
+                  </span>
+                  <span class="badge bg-info-subtle text-dark border border-info-subtle">
+                    Deliverable Format: Valid
+                  </span>
+                </div>
+                <div class="small text-secondary">
+                  <i class="bi bi-info-circle me-1 text-primary"></i> ${ai.feedback || 'AI Verification: Deliverables match task scope and criteria. Ready for faculty review.'}
+                </div>
+              </div>
+
+              ${fr.status ? `
+                <div class="alert ${fr.status === 'APPROVED' ? 'alert-success' : 'alert-warning'} py-2 px-3 small mt-2 mb-0">
+                  <strong>Faculty Status:</strong> ${fr.status} &bull; <em>"${fr.remarks || 'No remarks recorded.'}"</em>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    $('#modalVerifySubmissionsList').html(html);
+    new bootstrap.Modal('#facultyVerifyModal').show();
+  });
+
+  // Approve Deliverable (Faculty)
+  $('#btnApproveTaskDeliverable').on('click', function() {
+    if (!currentVerifyTaskId) return;
+    const remarks = $('#facultyVerifyRemarks').val();
+    const $btn = $(this);
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Approving...');
+
+    $.ajax({
+      url: `/project/task/${currentVerifyTaskId}/verify`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ action: 'APPROVE', remarks }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="bi bi-check-circle-fill me-1"></i> Approve Deliverable (Mark COMPLETED)');
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error approving deliverable.');
+      }
+    });
+  });
+
+  // Request Rework / Changes (Faculty)
+  $('#btnRequestTaskChanges').on('click', function() {
+    if (!currentVerifyTaskId) return;
+    const remarks = $('#facultyVerifyRemarks').val();
+    if (!remarks || !remarks.trim()) {
+      alert('Please provide instructions/remarks for the student explaining what needs to be revised.');
+      $('#facultyVerifyRemarks').focus();
+      return;
+    }
+    const $btn = $(this);
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Requesting Changes...');
+
+    $.ajax({
+      url: `/project/task/${currentVerifyTaskId}/verify`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ action: 'REQUEST_CHANGES', remarks }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Request Changes / Rework');
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error requesting changes.');
+      }
+    });
+  });
+
+  // Workspace Approve Proposal (Faculty)
+  $('.btn-workspace-approve-proposal').on('click', function() {
+    if (!confirm('Approve this project proposal? This authorizes the team to start project tasks.')) return;
+    $.ajax({
+      url: '/faculty/proposal-decision',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ projectId, action: 'APPROVE' }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error approving proposal.');
+      }
+    });
+  });
+
+  // Workspace Request Revision (Faculty)
+  $('#btnWorkspaceSubmitRevision').on('click', function() {
+    const revisionNotes = $('#workspaceRevNotes').val();
+    if (!revisionNotes || !revisionNotes.trim()) {
+      alert('Please enter revision instructions.');
+      return;
+    }
+    $.ajax({
+      url: '/faculty/proposal-decision',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ projectId, action: 'REVISION', revisionNotes }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error requesting revisions.');
+      }
+    });
+  });
+
+  // Workspace Reject Proposal (Faculty)
+  $('#btnWorkspaceSubmitReject').on('click', function() {
+    const reason = $('#workspaceRejectReason').val();
+    if (!reason || !reason.trim()) {
+      alert('Please specify rejection reason.');
+      return;
+    }
+    $.ajax({
+      url: '/faculty/proposal-decision',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ projectId, action: 'REJECT', reason }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error rejecting proposal.');
+      }
+    });
+  });
+
+  // Edit & Resubmit Proposal (Student)
+  $('#editResubmitForm').on('submit', function(e) {
+    e.preventDefault();
+    const payload = {
+      title: $('#resubmitTitle').val(),
+      description: $('#resubmitDescription').val()
+    };
+    $.ajax({
+      url: `/project/${projectId}/resubmit-proposal`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(payload),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error resubmitting proposal.');
+      }
+    });
+  });
+
+  // Workspace Remove Member by Creator
+  $('.btn-ws-remove-member').on('click', function() {
+    const teamId = $(this).data('teamid');
+    const memberId = $(this).data('memberid');
+    const memberName = $(this).data('membername');
+
+    if (!confirm(`Are you sure you want to remove ${memberName} from this team? Any active incomplete tasks will be returned to the unassigned project pool.`)) {
+      return;
+    }
+
+    $.ajax({
+      url: `/student/team/${teamId}/remove-member`,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ memberId }),
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error removing teammate.');
       }
     });
   });

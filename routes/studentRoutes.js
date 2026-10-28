@@ -27,6 +27,14 @@ router.get('/dashboard', async (req, res) => {
       })
       .populate('currentProject');
 
+    // Auto-sync if student is in an active team but profile assignedFaculty diverged
+    if (activeTeam && activeTeam.faculty) {
+      if (!student.assignedFaculty || student.assignedFaculty._id.toString() !== activeTeam.faculty._id.toString()) {
+        student.assignedFaculty = activeTeam.faculty;
+        await User.findByIdAndUpdate(student._id, { assignedFaculty: activeTeam.faculty._id });
+      }
+    }
+
     const pastTeams = await Team.find({
       'members.student': req.user._id,
       $or: [{ 'members.status': 'LEFT' }, { isActive: false }]
@@ -58,6 +66,17 @@ router.get('/select-faculty', async (req, res) => {
   try {
     const faculties = await User.find({ role: 'FACULTY' }).select('fullName employeeId email facultyCapacity');
 
+    // Find student's active team to ensure authoritative faculty guide
+    const activeTeam = await Team.findOne({
+      'members.student': req.user._id,
+      'members.status': 'ACTIVE',
+      isActive: true
+    }).populate('faculty', 'fullName');
+
+    const effectiveAssigned = (activeTeam && activeTeam.faculty)
+      ? activeTeam.faculty._id
+      : req.user.assignedFaculty;
+
     // Calculate occupied slots and available slots for each faculty
     const facultyList = await Promise.all(
       faculties.map(async (f) => {
@@ -79,7 +98,8 @@ router.get('/select-faculty', async (req, res) => {
     res.render('student/faculty-select', {
       title: 'Select Faculty Guide | CPMS',
       facultyList,
-      currentAssigned: req.user.assignedFaculty
+      currentAssigned: effectiveAssigned,
+      activeTeam
     });
   } catch (err) {
     console.error('Faculty List Error:', err);
@@ -93,6 +113,20 @@ router.post('/select-faculty', async (req, res) => {
     const { facultyId } = req.body;
     if (!facultyId) {
       return res.status(400).json({ success: false, message: 'Please select a faculty member.' });
+    }
+
+    // Check if student already belongs to an active team
+    const activeTeam = await Team.findOne({
+      'members.student': req.user._id,
+      'members.status': 'ACTIVE',
+      isActive: true
+    }).populate('faculty', 'fullName');
+
+    if (activeTeam && activeTeam.faculty && activeTeam.faculty._id.toString() !== facultyId) {
+      return res.status(400).json({
+        success: false,
+        message: `You are currently an active member of team "${activeTeam.name}" under ${activeTeam.faculty.fullName}. Leave your team before registering under a different faculty.`
+      });
     }
 
     const faculty = await User.findOne({ _id: facultyId, role: 'FACULTY' });
@@ -116,7 +150,7 @@ router.post('/select-faculty', async (req, res) => {
     return res.json({
       success: true,
       message: `Successfully registered under Faculty ${faculty.fullName}.`,
-      redirectUrl: '/student/create-team'
+      redirectUrl: '/student/dashboard'
     });
   } catch (err) {
     console.error('Assign Faculty Error:', err);
@@ -172,6 +206,14 @@ router.post('/create-team', validateTeamCreation, async (req, res) => {
     });
 
     await newTeam.save();
+
+    // Auto-sync team creator and members' assignedFaculty to match team's faculty
+    req.user.assignedFaculty = faculty;
+    await req.user.save();
+    await User.updateMany(
+      { _id: { $in: members.map((m) => m.student) } },
+      { $set: { assignedFaculty: faculty } }
+    );
 
     return res.status(201).json({
       success: true,
@@ -233,6 +275,120 @@ router.post('/leave-team', async (req, res) => {
   } catch (err) {
     console.error('Leave Team Error:', err);
     return res.status(500).json({ success: false, message: 'Error processing leave request.' });
+  }
+});
+
+// Remove Teammate (by Team Creator)
+router.post('/team/:teamId/remove-member', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { memberId } = req.body;
+
+    if (!memberId) {
+      return res.status(400).json({ success: false, message: 'Member identifier is required.' });
+    }
+
+    const team = await Team.findById(teamId).populate('currentProject');
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found.' });
+    }
+
+    // Only the team creator can remove teammates
+    if (team.creator.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Only the team creator has permission to remove teammates.' });
+    }
+
+    // Creator cannot remove themselves
+    if (memberId.toString() === team.creator.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'The team creator cannot be removed from the team. To disband the team, please use the Delete Team option.'
+      });
+    }
+
+    // Find member index in team
+    const memberIndex = team.members.findIndex((m) => m.student.toString() === memberId.toString());
+    if (memberIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Student is not an active member of this team.' });
+    }
+
+    const removedStudentId = team.members[memberIndex].student;
+
+    // Remove from team members array
+    team.members.splice(memberIndex, 1);
+
+    // Re-evaluate mixed team status
+    const hasInternal = team.members.some((m) => m.studentType === 'INTERNAL');
+    const hasExternal = team.members.some((m) => m.studentType === 'EXTERNAL');
+    team.isMixedTeam = hasInternal && hasExternal;
+    if (!team.isMixedTeam) {
+      team.collaborationConfirmed = false;
+    }
+
+    await team.save();
+
+    // If there is an active project, clean up member's participation and unassign active tasks
+    if (team.currentProject) {
+      await Project.updateOne(
+        { _id: team.currentProject },
+        { $pull: { participatingMembers: { student: removedStudentId } } }
+      );
+
+      // Unassign uncompleted tasks assigned to this removed member
+      await Task.updateMany(
+        { project: team.currentProject, assignedTo: removedStudentId, status: { $ne: 'COMPLETED' } },
+        { $set: { assignedTo: null, status: 'TODO' } }
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'Teammate was successfully removed from the team.',
+      redirectUrl: '/student/dashboard'
+    });
+  } catch (err) {
+    console.error('Remove Teammate Error:', err);
+    return res.status(500).json({ success: false, message: 'Error removing teammate.' });
+  }
+});
+
+// Delete / Disband Team (by Team Creator)
+router.post('/team/:teamId/delete', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const team = await Team.findById(teamId);
+
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found.' });
+    }
+
+    // Only the team creator can delete the team
+    if (team.creator.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Only the team creator has permission to delete this team.' });
+    }
+
+    // Clean up project, tasks, issues associated with this team
+    const projects = await Project.find({ team: team._id });
+    const projectIds = projects.map((p) => p._id);
+
+    if (projectIds.length > 0) {
+      const Issue = require('../models/Issue');
+      await Task.deleteMany({ project: { $in: projectIds } });
+      await Issue.deleteMany({ project: { $in: projectIds } });
+      await Project.deleteMany({ _id: { $in: projectIds } });
+    }
+
+    // Delete the team document
+    await Team.findByIdAndDelete(teamId);
+
+    return res.json({
+      success: true,
+      message: `Team "${team.name}" has been permanently deleted and all member slots have been released.`,
+      redirectUrl: '/student/dashboard'
+    });
+  } catch (err) {
+    console.error('Delete Team Error:', err);
+    return res.status(500).json({ success: false, message: 'Error deleting team.' });
   }
 });
 

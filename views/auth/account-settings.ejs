@@ -1,0 +1,184 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">Account Settings</h3>
+        <p class="text-muted small mb-0">Update your username or password with email OTP verification</p>
+      </div>
+      <a href="/" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Dashboard
+      </a>
+    </div>
+
+    <div id="settingsAlert" class="alert d-none mb-4" role="alert"></div>
+
+    <!-- Section 1: Change Username -->
+    <div class="card card-custom p-4 mb-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-gear text-primary me-2"></i> Change Username</h5>
+      <form id="changeUsernameForm">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small">Current Username</label>
+            <input type="text" class="form-control bg-light" value="@<%= currentUser.username %>" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">New Username <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="newUsername" required placeholder="Alphabetic only (e.g. naweed)">
+            <div class="form-text small text-muted">Must contain only alphabetic letters (no numbers or special characters).</div>
+            <div class="invalid-feedback" id="newUsernameError"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small">Email Verification OTP <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="text" class="form-control font-mono" id="usernameOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+            <button type="button" class="btn btn-outline-primary btn-request-otp" data-purpose="ACCOUNT_CHANGE" data-target="#usernameOtp">
+              <i class="bi bi-send"></i> Send OTP
+            </button>
+          </div>
+          <div class="form-text small text-muted">Sent to <%= currentUser.email %></div>
+          <div class="invalid-feedback" id="usernameOtpError"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom btn-sm">Update Username</button>
+      </form>
+    </div>
+
+    <!-- Section 2: Change Password -->
+    <div class="card card-custom p-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-lock text-primary me-2"></i> Change Password</h5>
+      <form id="changePasswordForm">
+        <div class="mb-3">
+          <label class="form-label small">Current Password <span class="text-danger">*</span></label>
+          <input type="password" class="form-control" id="currentPassword" required placeholder="Enter current password">
+          <div class="invalid-feedback" id="currentPasswordError"></div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small">New Password <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="settingsNewPassword" required placeholder="At least 6 characters">
+            <div class="invalid-feedback" id="settingsNewPasswordError"></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Confirm New Password <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="settingsConfirmPassword" required placeholder="Re-enter new password">
+            <div class="invalid-feedback" id="settingsConfirmPasswordError"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small">Email Verification OTP <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="text" class="form-control font-mono" id="passwordOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+            <button type="button" class="btn btn-outline-primary btn-request-otp" data-purpose="ACCOUNT_CHANGE" data-target="#passwordOtp">
+              <i class="bi bi-send"></i> Send OTP
+            </button>
+          </div>
+          <div class="form-text small text-muted">Sent to <%= currentUser.email %></div>
+          <div class="invalid-feedback" id="passwordOtpError"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom btn-sm">Update Password</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  const alertBox = $('#settingsAlert');
+  const userEmail = '<%= currentUser.email %>';
+
+  // Request OTP for account change
+  $('.btn-request-otp').on('click', function() {
+    const $btn = $(this);
+    const targetInput = $($btn.data('target'));
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Sending...');
+
+    $.ajax({
+      url: '/auth/send-otp',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ email: userEmail, purpose: 'ACCOUNT_CHANGE' }),
+      success: function(res) {
+        $btn.prop('disabled', false).html('<i class="bi bi-send"></i> Resend OTP');
+        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block').text(res.message);
+        if (res.devOtp) targetInput.val(res.devOtp);
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="bi bi-send"></i> Send OTP');
+        alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block').text('Error sending OTP.');
+      }
+    });
+  });
+
+  // Submit Change Username
+  $('#changeUsernameForm').on('submit', function(e) {
+    e.preventDefault();
+    $('.is-invalid').removeClass('is-invalid');
+    alertBox.addClass('d-none');
+
+    const newUsername = $('#newUsername').val().trim();
+    const otp = $('#usernameOtp').val().trim();
+
+    $.ajax({
+      url: '/auth/account-settings/change-username',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ newUsername, otp }),
+      success: function(res) {
+        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block').text(res.message);
+        setTimeout(function() { window.location.reload(); }, 1200);
+      },
+      error: function(xhr) {
+        const data = xhr.responseJSON;
+        if (data && data.errors && data.errors.newUsername) {
+          $('#newUsername').addClass('is-invalid');
+          $('#newUsernameError').text(data.errors.newUsername);
+        } else {
+          alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block').text(data.message || 'Error updating username.');
+        }
+      }
+    });
+  });
+
+  // Submit Change Password
+  $('#changePasswordForm').on('submit', function(e) {
+    e.preventDefault();
+    $('.is-invalid').removeClass('is-invalid');
+    alertBox.addClass('d-none');
+
+    const currentPassword = $('#currentPassword').val();
+    const newPassword = $('#settingsNewPassword').val();
+    const confirmPassword = $('#settingsConfirmPassword').val();
+    const otp = $('#passwordOtp').val().trim();
+
+    if (newPassword !== confirmPassword) {
+      $('#settingsConfirmPassword').addClass('is-invalid');
+      $('#settingsConfirmPasswordError').text('Passwords do not match.');
+      return;
+    }
+
+    $.ajax({
+      url: '/auth/account-settings/change-password',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ currentPassword, newPassword, confirmPassword, otp }),
+      success: function(res) {
+        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block').text(res.message);
+        setTimeout(function() { window.location.reload(); }, 1200);
+      },
+      error: function(xhr) {
+        const data = xhr.responseJSON;
+        alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block').text(data.message || 'Error updating password.');
+      }
+    });
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

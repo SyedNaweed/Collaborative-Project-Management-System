@@ -25,10 +25,10 @@ router.get('/dashboard', async (req, res) => {
     const occupiedSlots = teams.filter((t) => t.isActive).length;
     const availableSlots = Math.max(0, faculty.facultyCapacity - occupiedSlots);
 
-    // Fetch proposals under this faculty
+    // Fetch proposals under this faculty (both initial and revision requested)
     const pendingProposals = await Project.find({
       faculty: faculty._id,
-      status: 'PROPOSED'
+      status: { $in: ['PROPOSED', 'REVISION_REQUESTED'] }
     }).populate('team', 'name isMixedTeam');
 
     const activeProjects = await Project.find({
@@ -41,6 +41,16 @@ router.get('/dashboard', async (req, res) => {
       status: 'COMPLETED'
     }).populate('team', 'name');
 
+    // Fetch tasks awaiting faculty verification
+    const allFacultyProjects = await Project.find({ faculty: faculty._id }).select('_id');
+    const projectIds = allFacultyProjects.map((p) => p._id);
+    const pendingDeliverables = await Task.find({
+      project: { $in: projectIds },
+      status: 'IN_REVIEW'
+    })
+      .populate('project', 'title')
+      .populate('assignedTo', 'fullName username');
+
     res.render('faculty/dashboard', {
       title: 'Faculty Dashboard | CPMS',
       faculty,
@@ -49,7 +59,8 @@ router.get('/dashboard', async (req, res) => {
       availableSlots,
       pendingProposals,
       activeProjects,
-      completedProjects
+      completedProjects,
+      pendingDeliverables
     });
   } catch (err) {
     console.error('Faculty Dashboard Error:', err);
@@ -140,6 +151,97 @@ router.post('/evaluate-project', async (req, res) => {
   } catch (err) {
     console.error('Project Evaluation Error:', err);
     return res.status(500).json({ success: false, message: 'Error evaluating project.' });
+  }
+});
+
+// Delete Team (by Faculty Guide)
+router.post('/team/:teamId/delete', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const team = await Team.findById(teamId);
+
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found.' });
+    }
+
+    if (team.faculty.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not the supervising faculty for this team.' });
+    }
+
+    const projects = await Project.find({ team: team._id });
+    const projectIds = projects.map((p) => p._id);
+
+    if (projectIds.length > 0) {
+      const Issue = require('../models/Issue');
+      await Task.deleteMany({ project: { $in: projectIds } });
+      await Issue.deleteMany({ project: { $in: projectIds } });
+      await Project.deleteMany({ _id: { $in: projectIds } });
+    }
+
+    await Team.findByIdAndDelete(teamId);
+
+    return res.json({
+      success: true,
+      message: `Team "${team.name}" has been deleted by faculty guide.`,
+      redirectUrl: '/faculty/dashboard'
+    });
+  } catch (err) {
+    console.error('Faculty Delete Team Error:', err);
+    return res.status(500).json({ success: false, message: 'Error deleting team.' });
+  }
+});
+
+// Remove Member (by Faculty Guide)
+router.post('/team/:teamId/remove-member', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { memberId } = req.body;
+
+    const team = await Team.findById(teamId).populate('currentProject');
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found.' });
+    }
+
+    if (team.faculty.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not the supervising faculty for this team.' });
+    }
+
+    const memberIndex = team.members.findIndex((m) => m.student.toString() === memberId.toString());
+    if (memberIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Student is not a member of this team.' });
+    }
+
+    const removedStudentId = team.members[memberIndex].student;
+    team.members.splice(memberIndex, 1);
+
+    const hasInternal = team.members.some((m) => m.studentType === 'INTERNAL');
+    const hasExternal = team.members.some((m) => m.studentType === 'EXTERNAL');
+    team.isMixedTeam = hasInternal && hasExternal;
+    if (!team.isMixedTeam) {
+      team.collaborationConfirmed = false;
+    }
+
+    await team.save();
+
+    if (team.currentProject) {
+      await Project.updateOne(
+        { _id: team.currentProject },
+        { $pull: { participatingMembers: { student: removedStudentId } } }
+      );
+      await Task.updateMany(
+        { project: team.currentProject, assignedTo: removedStudentId, status: { $ne: 'COMPLETED' } },
+        { $set: { assignedTo: null, status: 'TODO' } }
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'Student was removed from the team by faculty guide.',
+      redirectUrl: '/faculty/dashboard'
+    });
+  } catch (err) {
+    console.error('Faculty Remove Member Error:', err);
+    return res.status(500).json({ success: false, message: 'Error removing team member.' });
   }
 });
 

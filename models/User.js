@@ -9,7 +9,13 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      minlength: [3, 'Username must be at least 3 characters']
+      minlength: [3, 'Username must be at least 3 characters'],
+      validate: {
+        validator: function (v) {
+          return /^[a-zA-Z]{3,30}$/.test(v);
+        },
+        message: 'Username must contain only alphabetic letters without any numbers or special characters.'
+      }
     },
     email: {
       type: String,
@@ -48,13 +54,13 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       validate: {
         validator: function (v) {
-          // Required only for INTERNAL student
+          // Required only for INTERNAL student: 2 numbers, 3 alphabets, 4 numbers
           if (this.role === 'STUDENT' && this.studentType === 'INTERNAL') {
-            return typeof v === 'string' && v.trim().length > 0;
+            return typeof v === 'string' && /^[0-9]{2}[A-Z]{3}[0-9]{4}$/.test(v.trim().toUpperCase());
           }
           return true;
         },
-        message: 'Register Number is mandatory for Internal students.'
+        message: 'Register Number must follow the format: 2 numbers, 3 alphabets, and 4 numbers (e.g. 22BIT0061).'
       }
     },
     assignedFaculty: {
