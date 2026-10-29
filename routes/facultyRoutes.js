@@ -68,7 +68,105 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
-// Proposal Decision (Approve, Reject, Revision Request)
+// Assign Project Directly to a Guided Student Team
+router.post('/assign-project', async (req, res) => {
+  try {
+    const { teamId, title, description } = req.body;
+
+    if (!teamId) {
+      return res.status(400).json({ success: false, message: 'Please select a student team.' });
+    }
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: 'Project title is required.' });
+    }
+
+    if (!description || !description.trim()) {
+      return res.status(400).json({ success: false, message: 'Project description and scope are required.' });
+    }
+
+    const team = await Team.findById(teamId).populate('currentProject');
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found.' });
+    }
+
+    if (team.faculty.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not the supervising faculty for this team.' });
+    }
+
+    if (!team.isActive) {
+      return res.status(400).json({ success: false, message: 'Cannot assign a project to an inactive team.' });
+    }
+
+    if (team.currentProject && !['COMPLETED', 'REJECTED'].includes(team.currentProject.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Team "${team.name}" already has an ongoing project ("${team.currentProject.title}"). A new project can only be assigned after the current one is completed.`
+      });
+    }
+
+    const activeMembers = team.members.filter((m) => m.status === 'ACTIVE');
+    if (activeMembers.length === 0) {
+      return res.status(400).json({ success: false, message: 'Selected team has no active student members.' });
+    }
+
+    const project = new Project({
+      team: team._id,
+      faculty: req.user._id,
+      title: title.trim(),
+      description: description.trim(),
+      status: 'APPROVED',
+      participatingMembers: activeMembers.map((m) => ({
+        student: m.student,
+        participationStatus: 'ACTIVE'
+      }))
+    });
+
+    await project.save();
+
+    team.currentProject = project._id;
+    await team.save();
+
+    return res.status(201).json({
+      success: true,
+      message: `Project "${project.title}" successfully assigned to team "${team.name}"!`,
+      redirectUrl: `/project/${project._id}/workspace`
+    });
+  } catch (err) {
+    console.error('Faculty Assign Project Error:', err);
+    return res.status(500).json({ success: false, message: 'Server error assigning project.' });
+  }
+});
+
+// Update Project Scope / Title by Faculty
+router.post('/project/:projectId/update', async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    if (!title || !title.trim() || !description || !description.trim()) {
+      return res.status(400).json({ success: false, message: 'Title and description are required.' });
+    }
+
+    const project = await Project.findOne({ _id: req.params.projectId, faculty: req.user._id });
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found or unauthorized.' });
+    }
+
+    project.title = title.trim();
+    project.description = description.trim();
+    await project.save();
+
+    return res.json({
+      success: true,
+      message: 'Project details and scope updated successfully!',
+      project
+    });
+  } catch (err) {
+    console.error('Faculty Project Update Error:', err);
+    return res.status(500).json({ success: false, message: 'Error updating project details.' });
+  }
+});
+
+// Proposal Decision (Approve, Reject, Revision Request - Legacy support)
 router.post('/proposal-decision', async (req, res) => {
   try {
     const { projectId, action, reason, revisionNotes } = req.body;

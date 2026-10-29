@@ -1,135 +1,185 @@
 <%- include('../partials/header') %>
 
-<!-- Top Stats Bar -->
-<div class="row g-4 mb-4">
-  <div class="col-md-4">
-    <div class="card card-custom p-4 border-start border-4 border-primary">
-      <span class="text-muted small fw-semibold text-uppercase">Allocated Team Capacity</span>
-      <h2 class="fw-bold text-dark mt-1 mb-0"><%= faculty.facultyCapacity %> <span class="fs-6 text-muted fw-normal">teams</span></h2>
-      <span class="text-muted small">Configured limit (2 to 7)</span>
+<!-- Top Stats Bar & Quick Action -->
+<div class="row g-4 mb-4 align-items-center">
+  <div class="col-md-3">
+    <div class="card card-custom p-3 border-start border-4 border-primary">
+      <span class="text-muted small fw-semibold text-uppercase">Team Capacity</span>
+      <h3 class="fw-bold text-dark mt-1 mb-0"><%= faculty.facultyCapacity %> <span class="fs-6 text-muted fw-normal">teams</span></h3>
+      <span class="text-muted small">Supervision limit</span>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card card-custom p-4 border-start border-4 border-warning">
-      <span class="text-muted small fw-semibold text-uppercase">Occupied Team Slots</span>
-      <h2 class="fw-bold text-warning-emphasis mt-1 mb-0"><%= occupiedSlots %> <span class="fs-6 text-muted fw-normal">teams active</span></h2>
-      <span class="text-muted small">Current active allocations</span>
+  <div class="col-md-3">
+    <div class="card card-custom p-3 border-start border-4 border-warning">
+      <span class="text-muted small fw-semibold text-uppercase">Occupied Slots</span>
+      <h3 class="fw-bold text-warning-emphasis mt-1 mb-0"><%= occupiedSlots %> <span class="fs-6 text-muted fw-normal">active teams</span></h3>
+      <span class="text-muted small">Current allocations</span>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card card-custom p-4 border-start border-4 border-success">
+  <div class="col-md-3">
+    <div class="card card-custom p-3 border-start border-4 border-success">
       <span class="text-muted small fw-semibold text-uppercase">Available Capacity</span>
-      <h2 class="fw-bold text-success mt-1 mb-0"><%= availableSlots %> <span class="fs-6 text-muted fw-normal">slots free</span></h2>
+      <h3 class="fw-bold text-success mt-1 mb-0"><%= availableSlots %> <span class="fs-6 text-muted fw-normal">slots free</span></h3>
       <span class="text-muted small">Open for new student teams</span>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card card-custom p-3 bg-primary text-white border-0 shadow-sm d-flex flex-column justify-content-between h-100">
+      <div>
+        <span class="text-white-50 small fw-semibold text-uppercase">Direct Project Assignment</span>
+        <h6 class="fw-bold text-white mt-1 mb-2">Assign Project to Team</h6>
+      </div>
+      <button class="btn btn-light btn-sm fw-bold text-primary w-100" data-bs-toggle="modal" data-bs-target="#assignProjectModal">
+        <i class="bi bi-plus-circle-fill me-1"></i> Assign New Project
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Section: Project Proposals Pending Review -->
+<!-- Section: Guided Student Teams & Project Assignment -->
+<div class="card card-custom p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h5 class="fw-bold text-dark mb-1">
+        <i class="bi bi-people-fill text-primary me-2"></i> Guided Teams & Project Allocation (<%= teams.length %>)
+      </h5>
+      <p class="text-muted small mb-0">Directly assign academic projects to student teams and supervise their workspaces.</p>
+    </div>
+    <% if (teams && teams.length > 0) { %>
+      <button class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#assignProjectModal">
+        <i class="bi bi-file-earmark-plus-fill me-1"></i> Assign Project
+      </button>
+    <% } %>
+  </div>
+
+  <% if (teams && teams.length > 0) { %>
+    <div class="row g-3">
+      <% teams.forEach(function(team) { %>
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 p-3 bg-light border-0 rounded-3 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="fw-bold text-dark mb-0"><%= team.name %></h6>
+                <% if (team.isMixedTeam) { %>
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-mono small">Mixed</span>
+                <% } %>
+              </div>
+
+              <!-- Members preview -->
+              <div class="small text-muted mb-2">
+                <span class="fw-semibold text-secondary">Members (<%= team.members.filter(m => m.status === 'ACTIVE').length %>):</span>
+                <div class="mt-1">
+                  <% team.members.filter(m => m.status === 'ACTIVE').forEach(function(m) { %>
+                    <span class="badge bg-white text-dark border me-1 mb-1 font-mono" style="font-size: 0.72rem;">
+                      <%= m.student ? m.student.fullName : 'Member' %>
+                    </span>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-auto pt-2 border-top">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small">Status & Actions:</span>
+                <button class="btn btn-outline-danger btn-sm py-0 px-2 btn-faculty-delete-team" data-teamid="<%= team._id %>" data-teamname="<%= team.name %>" title="Disband / Delete Team">
+                  <i class="bi bi-trash3"></i> Delete Team
+                </button>
+              </div>
+
+              <% if (team.currentProject && !['REJECTED'].includes(team.currentProject.status)) { %>
+                <div class="bg-white p-2 rounded-2 border d-flex justify-content-between align-items-center">
+                  <div class="overflow-hidden me-2">
+                    <span class="d-block fw-semibold text-dark small text-truncate" title="<%= team.currentProject.title %>">
+                      <%= team.currentProject.title %>
+                    </span>
+                    <span class="status-badge status-<%= team.currentProject.status.toLowerCase().replace('_', '') %>" style="font-size: 0.65rem;">
+                      <%= team.currentProject.status %>
+                    </span>
+                  </div>
+                  <a href="/project/<%= team.currentProject._id %>/workspace" class="btn btn-outline-primary btn-sm py-1 px-2 text-nowrap">
+                    Workspace <i class="bi bi-arrow-right"></i>
+                  </a>
+                </div>
+              <% } else { %>
+                <div class="bg-white p-2 rounded-2 border d-flex justify-content-between align-items-center">
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle small">
+                    <i class="bi bi-hourglass-split me-1"></i> No Project Assigned
+                  </span>
+                  <button class="btn btn-primary-custom btn-sm py-1 px-2 btn-open-assign-modal" data-teamid="<%= team._id %>" data-teamname="<%= team.name %>">
+                    <i class="bi bi-plus-circle me-1"></i> Assign Project
+                  </button>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-people fs-2 mb-2 d-block"></i>
+      No student teams currently registered under your faculty supervision.
+    </div>
+  <% } %>
+</div>
+
+<!-- Section: Supervised Projects Overview -->
+<% if (activeProjects && activeProjects.length > 0) { %>
 <div class="card card-custom p-4 mb-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h5 class="fw-bold text-dark mb-1">
-        <i class="bi bi-inbox-fill text-primary me-2"></i> Project Proposals Awaiting Faculty Review
+        <i class="bi bi-folder-check text-primary me-2"></i> Active Assigned Projects (<%= activeProjects.length %>)
       </h5>
-      <p class="text-muted small mb-0">Review student team proposals. Approve, request revisions, or reject with feedback.</p>
+      <p class="text-muted small mb-0">Projects directly assigned to student teams currently in progress.</p>
     </div>
-    <span class="badge bg-primary rounded-pill px-3 py-2"><%= pendingProposals.length %> Pending</span>
+    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+      <%= activeProjects.length %> Active
+    </span>
   </div>
 
-  <% if (pendingProposals && pendingProposals.length > 0) { %>
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Project Title</th>
+          <th>Assigned Team</th>
+          <th>Status</th>
+          <th>Assigned Date</th>
+          <th class="text-end">Workspace</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% activeProjects.forEach(function(proj) { %>
           <tr>
-            <th>Team Name</th>
-            <th>Project Title</th>
-            <th>Description & Scope</th>
-            <th>Composition</th>
-            <th class="text-end">Review Actions</th>
+            <td>
+              <span class="fw-bold text-dark"><%= proj.title %></span>
+            </td>
+            <td>
+              <span class="badge bg-light text-secondary border font-mono">
+                <i class="bi bi-people me-1"></i><%= proj.team ? proj.team.name : 'Unknown Team' %>
+              </span>
+            </td>
+            <td>
+              <span class="status-badge status-<%= proj.status.toLowerCase().replace('_', '') %> small">
+                <%= proj.status %>
+              </span>
+            </td>
+            <td>
+              <span class="small text-muted"><%= new Date(proj.createdAt).toLocaleDateString() %></span>
+            </td>
+            <td class="text-end">
+              <a href="/project/<%= proj._id %>/workspace" class="btn btn-sm btn-primary-custom">
+                <i class="bi bi-layout-text-window-reverse me-1"></i> Open Workspace
+              </a>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <% pendingProposals.forEach(function(p) { %>
-            <tr>
-              <td>
-                <span class="fw-bold text-dark"><%= p.team ? p.team.name : 'Unknown Team' %></span>
-              </td>
-              <td>
-                <span class="fw-semibold text-primary"><%= p.title %></span>
-                <span class="badge <%= p.status === 'REVISION_REQUESTED' ? 'bg-warning text-dark' : 'bg-primary' %> ms-1" style="font-size: 0.68rem;"><%= p.status %></span>
-              </td>
-              <td><span class="small text-muted"><%= p.description.substring(0, 80) %>...</span></td>
-              <td>
-                <% if (p.team && p.team.isMixedTeam) { %>
-                  <span class="badge badge-warning text-dark border">Mixed Collaboration</span>
-                <% } else { %>
-                  <span class="badge bg-light text-secondary border">Single-Type</span>
-                <% } %>
-              </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-success btn-approve-proposal me-1" data-id="<%= p._id %>">
-                  <i class="bi bi-check-lg"></i> Approve
-                </button>
-                <button class="btn btn-sm btn-outline-warning text-dark me-1" data-bs-toggle="modal" data-bs-target="#revisionModal-<%= p._id %>">
-                  <i class="bi bi-pencil-square"></i> Revision
-                </button>
-                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-<%= p._id %>">
-                  <i class="bi bi-x-circle"></i> Reject
-                </button>
-
-                <!-- Modal: Request Revision -->
-                <div class="modal fade" id="revisionModal-<%= p._id %>" tabindex="-1">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content card-custom text-start">
-                      <div class="modal-header border-0">
-                        <h6 class="modal-title fw-bold">Request Proposal Revisions</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        <label class="form-label small">Revision Instructions for Team:</label>
-                        <textarea class="form-control" id="revNotes-<%= p._id %>" rows="3" placeholder="Specify required modifications..."></textarea>
-                      </div>
-                      <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-warning btn-sm btn-submit-revision" data-id="<%= p._id %>">Submit Revision Request</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Modal: Reject Proposal -->
-                <div class="modal fade" id="rejectModal-<%= p._id %>" tabindex="-1">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content card-custom text-start">
-                      <div class="modal-header border-0">
-                        <h6 class="modal-title fw-bold text-danger">Reject Project Proposal</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        <label class="form-label small">Reason for Rejection <span class="text-danger">*</span>:</label>
-                        <textarea class="form-control" id="rejReason-<%= p._id %>" rows="3" placeholder="Provide clear reason why proposal is rejected..." required></textarea>
-                      </div>
-                      <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger btn-sm btn-submit-reject" data-id="<%= p._id %>">Confirm Rejection</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
-    </div>
-  <% } else { %>
-    <div class="text-center py-4 text-muted">
-      <i class="bi bi-clipboard-check fs-2 mb-2 d-block"></i>
-      No pending project proposals awaiting your review.
-    </div>
-  <% } %>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
 </div>
+<% } %>
 
 <!-- Section: Task Deliverables Awaiting Verification -->
 <div class="card card-custom p-4 mb-4 border-start border-4 border-info">
@@ -186,56 +236,210 @@
   <% } %>
 </div>
 
-<!-- Section: Active Teams & Projects Workspace -->
-<div class="card card-custom p-4 mb-4">
-  <h5 class="fw-bold text-dark mb-3">
-    <i class="bi bi-people-fill text-primary me-2"></i> Active Guided Teams (<%= teams.length %>)
-  </h5>
-  <% if (teams && teams.length > 0) { %>
-    <div class="row g-3">
-      <% teams.forEach(function(team) { %>
-        <div class="col-md-6 col-lg-4">
-          <div class="card h-100 p-3 bg-light border-0 rounded-3">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h6 class="fw-bold text-dark mb-0"><%= team.name %></h6>
-              <% if (team.isMixedTeam) { %>
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-mono small">Mixed</span>
-              <% } %>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="text-muted small">
-                Members: <strong><%= team.members.filter(m => m.status === 'ACTIVE').length %> students</strong>
-              </span>
-              <button class="btn btn-outline-danger btn-sm py-0 px-2 btn-faculty-delete-team" data-teamid="<%= team._id %>" data-teamname="<%= team.name %>" title="Disband / Delete Team">
-                <i class="bi bi-trash3"></i> Delete
-              </button>
-            </div>
-            <div class="mt-auto pt-2 border-top">
-              <% if (team.currentProject) { %>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="status-badge status-<%= team.currentProject.status.toLowerCase().replace('_', '') %> small">
-                    <%= team.currentProject.status %>
-                  </span>
-                  <a href="/project/<%= team.currentProject._id %>/workspace" class="btn btn-outline-primary btn-sm py-1">
-                    Workspace <i class="bi bi-arrow-right"></i>
-                  </a>
-                </div>
-              <% } else { %>
-                <span class="text-muted small">No current project submitted.</span>
-              <% } %>
-            </div>
-          </div>
-        </div>
-      <% }); %>
+<!-- Section: Legacy Project Proposals Pending Review (Shown only if any legacy proposals exist) -->
+<% if (pendingProposals && pendingProposals.length > 0) { %>
+<div class="card card-custom p-4 mb-4 border-start border-4 border-warning">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="fw-bold text-dark mb-1">
+        <i class="bi bi-inbox-fill text-warning me-2"></i> Pending Student Proposals (<%= pendingProposals.length %>)
+      </h5>
+      <p class="text-muted small mb-0">Legacy proposals submitted by teams awaiting faculty review.</p>
     </div>
-  <% } else { %>
-    <p class="text-muted small mb-0">No teams currently registered under your faculty supervision.</p>
-  <% } %>
+    <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><%= pendingProposals.length %> Pending</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Team Name</th>
+          <th>Project Title</th>
+          <th>Description & Scope</th>
+          <th>Composition</th>
+          <th class="text-end">Review Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% pendingProposals.forEach(function(p) { %>
+          <tr>
+            <td>
+              <span class="fw-bold text-dark"><%= p.team ? p.team.name : 'Unknown Team' %></span>
+            </td>
+            <td>
+              <span class="fw-semibold text-primary"><%= p.title %></span>
+              <span class="badge <%= p.status === 'REVISION_REQUESTED' ? 'bg-warning text-dark' : 'bg-primary' %> ms-1" style="font-size: 0.68rem;"><%= p.status %></span>
+            </td>
+            <td><span class="small text-muted"><%= p.description.substring(0, 80) %>...</span></td>
+            <td>
+              <% if (p.team && p.team.isMixedTeam) { %>
+                <span class="badge badge-warning text-dark border">Mixed Collaboration</span>
+              <% } else { %>
+                <span class="badge bg-light text-secondary border">Single-Type</span>
+              <% } %>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-success btn-approve-proposal me-1" data-id="<%= p._id %>">
+                <i class="bi bi-check-lg"></i> Approve
+              </button>
+              <button class="btn btn-sm btn-outline-warning text-dark me-1" data-bs-toggle="modal" data-bs-target="#revisionModal-<%= p._id %>">
+                <i class="bi bi-pencil-square"></i> Revision
+              </button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-<%= p._id %>">
+                <i class="bi bi-x-circle"></i> Reject
+              </button>
+
+              <!-- Modal: Request Revision -->
+              <div class="modal fade" id="revisionModal-<%= p._id %>" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content card-custom text-start">
+                    <div class="modal-header border-0">
+                      <h6 class="modal-title fw-bold">Request Proposal Revisions</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label class="form-label small">Revision Instructions for Team:</label>
+                      <textarea class="form-control" id="revNotes-<%= p._id %>" rows="3" placeholder="Specify required modifications..."></textarea>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <button type="button" class="btn btn-warning btn-sm btn-submit-revision" data-id="<%= p._id %>">Submit Revision Request</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal: Reject Proposal -->
+              <div class="modal fade" id="rejectModal-<%= p._id %>" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content card-custom text-start">
+                    <div class="modal-header border-0">
+                      <h6 class="modal-title fw-bold text-danger">Reject Project Proposal</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label class="form-label small">Reason for Rejection <span class="text-danger">*</span>:</label>
+                      <textarea class="form-control" id="rejReason-<%= p._id %>" rows="3" placeholder="Provide clear reason why proposal is rejected..." required></textarea>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <button type="button" class="btn btn-danger btn-sm btn-submit-reject" data-id="<%= p._id %>">Confirm Rejection</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<!-- Modal: Assign Academic Project to Student Team -->
+<div class="modal fade" id="assignProjectModal" tabindex="-1" aria-labelledby="assignProjectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold text-dark" id="assignProjectModalLabel">
+            <i class="bi bi-file-earmark-plus-fill text-primary me-2"></i>Assign Academic Project to Team
+          </h5>
+          <p class="text-muted small mb-0">Directly assign an academic project topic, scope, and objectives to a guided team.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="assignProjectForm">
+        <div class="modal-body py-3">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Target Student Team <span class="text-danger">*</span></label>
+            <select class="form-select" id="assignTeamSelect" name="teamId" required>
+              <option value="" disabled selected>-- Select a Guided Team --</option>
+              <% teams.forEach(function(t) { %>
+                <% const hasActiveProject = t.currentProject && !['COMPLETED', 'REJECTED'].includes(t.currentProject.status); %>
+                <option value="<%= t._id %>" <%= hasActiveProject ? 'disabled' : '' %>>
+                  <%= t.name %> (<%= t.members.filter(m => m.status === 'ACTIVE').length %> members) <%= hasActiveProject ? '— (Already has ongoing project)' : '— (Ready for project)' %>
+                </option>
+              <% }); %>
+            </select>
+            <div class="form-text small">Teams without an ongoing project are enabled for assignment.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Project Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="assignProjectTitle" name="title" required placeholder="e.g. Distributed Task Orchestrator & AI Quality Pipeline">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Project Scope, Guidelines & Deliverables <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="assignProjectDesc" name="description" rows="5" required placeholder="Detail the objectives, technology requirements, deliverables, and sprint expectations for the students..."></textarea>
+          </div>
+
+          <div id="assignModalAlert" class="alert d-none small mb-0"></div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom" id="btnSubmitAssignProject">
+            <i class="bi bi-send-fill me-1"></i> Assign Project Now
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
 $(document).ready(function() {
-  // Approve proposal
+  // Open assign modal directly for a specific team
+  $('.btn-open-assign-modal').on('click', function() {
+    const teamId = $(this).data('teamid');
+    $('#assignTeamSelect').val(teamId);
+    $('#assignModalAlert').addClass('d-none');
+    const modalEl = document.getElementById('assignProjectModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  });
+
+  // Assign project submit form
+  $('#assignProjectForm').on('submit', function(e) {
+    e.preventDefault();
+    const alertBox = $('#assignModalAlert');
+    const submitBtn = $('#btnSubmitAssignProject');
+
+    alertBox.addClass('d-none');
+    submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Assigning...');
+
+    const payload = {
+      teamId: $('#assignTeamSelect').val(),
+      title: $('#assignProjectTitle').val(),
+      description: $('#assignProjectDesc').val()
+    };
+
+    $.ajax({
+      url: '/faculty/assign-project',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(payload),
+      success: function(res) {
+        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block').text(res.message);
+        setTimeout(function() {
+          if (res.redirectUrl) {
+            window.location.href = res.redirectUrl;
+          } else {
+            window.location.reload();
+          }
+        }, 1000);
+      },
+      error: function(xhr) {
+        submitBtn.prop('disabled', false).html('<i class="bi bi-send-fill me-1"></i> Assign Project Now');
+        const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error assigning project.';
+        alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block').text(msg);
+      }
+    });
+  });
+
+  // Approve proposal (legacy)
   $('.btn-approve-proposal').on('click', function() {
     const projectId = $(this).data('id');
     if (!confirm('Approve this project proposal? The team will immediately gain access to the Project Workspace.')) {
@@ -257,7 +461,7 @@ $(document).ready(function() {
     });
   });
 
-  // Submit revision
+  // Submit revision (legacy)
   $('.btn-submit-revision').on('click', function() {
     const projectId = $(this).data('id');
     const revisionNotes = $(`#revNotes-${projectId}`).val();
@@ -282,7 +486,7 @@ $(document).ready(function() {
     });
   });
 
-  // Submit rejection
+  // Submit rejection (legacy)
   $('.btn-submit-reject').on('click', function() {
     const projectId = $(this).data('id');
     const reason = $(`#rejReason-${projectId}`).val();

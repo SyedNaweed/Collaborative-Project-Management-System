@@ -91,14 +91,15 @@ One student initiates creation, selects an available faculty, names the team, an
 ### Workflow 7: Team Membership Lifecycle
 Teams persist even after a project is finished. Students cannot leave while a project is ongoing. Once completed, a student can leave; their status becomes `LEFT` with a recorded timestamp while their project history is retained.
 
-### Workflow 8: Project Creation
-A team can execute multiple projects over time, but strictly **one current project at a time**. A new project can only be initiated if the previous one is marked `COMPLETED`.
+### Workflow 8: Project Creation & Direct Faculty Assignment
+Faculty guides directly assign academic projects to student teams under their supervision. A team can execute multiple projects over time, but strictly **one current project at a time**. A new project can only be assigned if the previous one is marked `COMPLETED` or `REJECTED`.
 
-### Workflow 9: Project Proposal and Approval
-The team submits a proposal (title, description). Status starts as `PROPOSED`. Faculty can:
-1. **Approve:** Moves project to `APPROVED` and unlocks workspace.
-2. **Request Revision:** Team receives faculty revision notes, edits, and resubmits.
-3. **Reject:** Project moves to `REJECTED` with an explicit reason recorded.
+### Workflow 9: Direct Faculty Project Allocation Model
+Instead of requiring student proposals and approval cycles, the supervising Faculty Guide directly allocates the project:
+1. **Direct Assignment:** Faculty selects a supervised team, enters the project title, description, and scope guidelines via the Faculty Dashboard.
+2. **Immediate Activation:** Upon assignment, the project is created with status `APPROVED`, active team members are registered as `ACTIVE` participants, and `team.currentProject` is updated immediately.
+3. **Workspace Unlocked:** The team gains immediate access to the Project Workspace to begin task creation, sprint planning, and deliverable submission without waiting for review gates.
+4. **Scope Refinement:** The supervising faculty guide retains the ability to update and refine the project scope and instructions directly from the workspace or dashboard.
 
 ### Workflow 10: Project Workspace
 Central hub for approved projects: Overview, Members & Statuses, Tasks, Submissions, Version History, Issues & Doubts, AI verification reports, and Final Evaluation.
@@ -359,8 +360,10 @@ mongosh "collaborative_pms" --eval "db.projects.find({}, {title: 1, status: 1, p
 | `GET` | `/student/create-team` | `isStudent` | Team creation form |
 | `POST`| `/student/create-team` | `isStudent` | Validates team bounds, mixed collaboration checkbox, creates team |
 | `POST`| `/student/leave-team` | `isStudent` | Leave team (allowed only if project completed) |
-| `GET` | `/faculty/dashboard` | `isFaculty` | Faculty stats, pending proposals, active teams |
-| `POST`| `/faculty/proposal-decision` | `isFaculty` | Approve, reject, or request proposal revisions |
+| `GET` | `/faculty/dashboard` | `isFaculty` | Faculty stats, active guided teams, project assignment |
+| `POST`| `/faculty/assign-project` | `isFaculty` | Directly assigns academic project to guided team (`APPROVED` status) |
+| `POST`| `/faculty/project/:projectId/update` | `isFaculty` | Updates assigned project title and description scope |
+| `POST`| `/faculty/proposal-decision` | `isFaculty` | Approve, reject, or request proposal revisions (legacy support) |
 | `POST`| `/faculty/evaluate-project` | `isFaculty` | Grade project (score 0-100, remarks) & archive |
 | `GET` | `/project/:id/workspace` | Authenticated | Project workspace: overview, members, tasks, issues |
 | `POST`| `/project/propose` | `isStudent` | Propose new project for active team |

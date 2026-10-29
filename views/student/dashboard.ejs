@@ -137,13 +137,18 @@
         <!-- Current Project Status -->
         <div class="border-top pt-3">
           <% if (activeTeam.currentProject) { %>
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div>
                 <span class="text-muted small d-block">Current Project</span>
                 <h5 class="fw-bold text-dark mb-1"><%= activeTeam.currentProject.title %></h5>
-                <span class="status-badge status-<%= activeTeam.currentProject.status.toLowerCase().replace('_', '') %>">
-                  <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Status: <%= activeTeam.currentProject.status %>
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="status-badge status-<%= activeTeam.currentProject.status.toLowerCase().replace('_', '') %>">
+                    <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> <%= activeTeam.currentProject.status %>
+                  </span>
+                  <span class="text-muted small">
+                    Assigned by: <strong><%= activeTeam.faculty ? activeTeam.faculty.fullName : 'Guide' %></strong>
+                  </span>
+                </div>
               </div>
               <a href="/project/<%= activeTeam.currentProject._id %>/workspace" class="btn btn-primary-custom">
                 <i class="bi bi-layout-text-window-reverse me-1"></i> Open Project Workspace
@@ -151,12 +156,14 @@
             </div>
           <% } else { %>
             <div class="text-center py-4 bg-light rounded-3">
-              <i class="bi bi-journal-plus text-primary fs-2 mb-2 d-block"></i>
-              <h6 class="fw-bold text-dark mb-1">No Ongoing Project</h6>
-              <p class="text-muted small mb-3">Your team does not have an active project yet. Propose your project topic now.</p>
-              <button class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#proposeProjectModal">
-                <i class="bi bi-file-earmark-plus me-1"></i> Propose Project
-              </button>
+              <i class="bi bi-hourglass-split text-warning-emphasis fs-2 mb-2 d-block"></i>
+              <h6 class="fw-bold text-dark mb-1">Awaiting Project Assignment</h6>
+              <p class="text-muted small mb-2">
+                Your supervising faculty guide (<strong><%= activeTeam.faculty ? activeTeam.faculty.fullName : 'Faculty Guide' %></strong>) will assign an academic project topic and scope directly to your team.
+              </p>
+              <span class="badge bg-primary bg-opacity-10 text-primary small px-3 py-2">
+                <i class="bi bi-info-circle me-1"></i> Your project workspace and task board will activate automatically once assigned
+              </span>
             </div>
           <% } %>
         </div>
@@ -199,69 +206,8 @@
   </div>
 </div>
 
-<!-- Modal: Propose Project -->
-<% if (activeTeam) { %>
-<div class="modal fade" id="proposeProjectModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content card-custom">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Propose New Academic Project</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form id="proposeProjectForm">
-        <div class="modal-body">
-          <input type="hidden" name="teamId" value="<%= activeTeam._id %>">
-          <div class="mb-3">
-            <label class="form-label">Project Title <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="title" id="projTitle" required placeholder="e.g. Distributed Task Orchestrator">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Project Description & Scope <span class="text-danger">*</span></label>
-            <textarea class="form-control" name="description" id="projDesc" rows="4" required placeholder="Detail the objectives, tech stack, and deliverables..."></textarea>
-          </div>
-          <div id="proposalModalAlert" class="alert d-none small mb-0"></div>
-        </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary-custom">Submit Proposal</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-<% } %>
-
 <script>
 $(document).ready(function() {
-  // Propose project AJAX
-  $('#proposeProjectForm').on('submit', function(e) {
-    e.preventDefault();
-    const alertBox = $('#proposalModalAlert');
-    alertBox.addClass('d-none');
-
-    const payload = {
-      teamId: $('input[name="teamId"]').val(),
-      title: $('#projTitle').val(),
-      description: $('#projDesc').val()
-    };
-
-    $.ajax({
-      url: '/project/propose',
-      type: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(payload),
-      success: function(res) {
-        alertBox.removeClass('alert-danger d-none').addClass('alert alert-success d-block').text(res.message);
-        setTimeout(function() {
-          window.location.reload();
-        }, 1200);
-      },
-      error: function(xhr) {
-        const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error submitting proposal.';
-        alertBox.removeClass('alert-success d-none').addClass('alert alert-danger d-block').text(msg);
-      }
-    });
-  });
 
   // Leave team AJAX
   $('#btnLeaveTeam').on('click', function() {
